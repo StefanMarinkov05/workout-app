@@ -1,0 +1,541 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ====== ENUMS ======
+
+enum ImageRole {
+  THUMBNAIL // static preview
+  DEMONSTRATION // full technique image
+  VIDEO // mp4 demonstration
+  MUSCLE_MAP // activation diagram
+  DIAGRAM // anatomical illustration
+  HIGHLIGHT // activated muscle highlight
+  AVATAR // user profile picture
+  PROGRESS_PHOTO // body progress
+}
+
+enum PrioritySide {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+enum MuscleSize {
+  SMALL // biceps, calves, forearms
+  MEDIUM // shoulders, triceps, hamstrings
+  LARGE // back, chest, quadriceps, glutes
+}
+
+enum MuscleRole {
+  PRIMARY
+  SECONDARY
+  STABILIZER
+}
+
+enum MovementRole {
+  PRIMARY
+  ASSISTS
+}
+
+enum MovementPlane {
+  SAGITTAL
+  FRONTAL
+  TRANSVERSE
+}
+
+enum MuscleGroup {
+  PUSH
+  PULL
+  LEGS
+  UPPER_BODY
+  ARMS
+  BACK
+  CHEST
+  DELTS
+  MIX
+}
+
+enum Split {
+  NO_SPLIT
+  PUSH_PULL_LEGS
+  BRO_SPLIT
+  UPPER_LOWER
+  SEVEN_DAYS
+  OTHER
+}
+
+enum SessionStatus {
+  NO_STATUS
+  PLANNED
+  ACTIVE
+  COMPLETED
+  SKIPPED
+  PARTIAL
+}
+
+// ====== UTILS ======
+
+model Image {
+  id        String    @id @default(cuid())
+  url       String
+  alt       String? // accessibility text
+  mimeType  String // "image/svg+xml", "image/jpeg", "video/mp4"
+  widthPx   Int?
+  heightPx  Int?
+  sizeBytes Int?
+  order     Int       @default(0) // display order
+  role      ImageRole // what this image represents
+
+  // owner — one populated per image
+  exerciseTypeId Int?
+  muscleId       Int?
+  gripId         Int?
+  EquipmentId    Int?
+  userId         String?
+
+  exerciseType ExerciseType? @relation(fields: [exerciseTypeId], references: [id])
+  muscle       Muscle?       @relation(fields: [muscleId], references: [id])
+  grip         Grip?         @relation(fields: [gripId], references: [id])
+  Equipment    Equipment?    @relation(fields: [EquipmentId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([exerciseTypeId, role])
+  @@index([muscleId])
+  @@index([userId])
+}
+
+// ====== EXERCISE SPECS ======
+
+// Muscles
+
+model Muscle {
+  id   Int    @id @default(autoincrement())
+  name String @unique // "Rectus Femoris" — source of truth
+  // key derived: "rectus_femoris"
+
+  fibreType1Pct Int? // slow twitch %
+  fibreType2Pct Int? // fast twitch %
+
+  recoveryHours Int? // typical recovery time — 24, 48, 72
+
+  sizeClass MuscleSize? // for volume landmark reference
+
+  originId    Int?
+  origin      MuscleEndRegion? @relation("MuscleOrigin", fields: [originId], references: [id])
+  insertionId Int?
+  insertion   MuscleEndRegion? @relation("MuscleInsertion", fields: [insertionId], references: [id])
+
+  // hierarchy
+  parentId Int?
+  parent   Muscle?  @relation("MuscleGroup", fields: [parentId], references: [id])
+  children Muscle[] @relation("MuscleGroup")
+
+  movements     MuscleMovement[]
+  exerciseTypes ExerciseTypeMuscle[]
+  diagramUrl    String?
+  highlightUrl  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  images    Image[]
+
+  @@index([parentId])
+}
+
+model Movement {
+  id        Int            @id @default(autoincrement())
+  name      String         @unique // "Knee Extension", "Hip Flexion"
+  plane     MovementPlane?
+  technique String?
+  demoUrl   String?
+
+  // explicit junction — keeps role
+  muscles MuscleMovement[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// the junction — with role
+model MuscleMovement {
+  muscleId   Int
+  movementId Int
+  role       MovementRole @default(PRIMARY)
+
+  muscle   Muscle   @relation(fields: [muscleId], references: [id], onDelete: Cascade)
+  movement Movement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+
+  @@id([muscleId, movementId])
+  @@index([movementId])
+}
+
+// origin and insertion of muscle - graphical representation
+model MuscleEndRegion {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  imageURL String?
+  origin   Muscle[] @relation("MuscleOrigin")
+  isertion Muscle[] @relation("MuscleInsertion")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// Grip types - underhand, overhand
+
+model Grip {
+  id          Int    @id @default(autoincrement())
+  type        String @unique
+  description String
+  imageURL    String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  images Image[]
+
+  exercises Exercise[]
+
+  exerciseTemplates ExerciseTemplate[]
+}
+
+model Equipment {
+  id             Int             @id @default(autoincrement())
+  name           String          @unique
+  description    String?
+  userEquipments UserEquipment[]
+  exercises      Exercise[]
+  imageURL       String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  images Image[]
+
+  exerciseTemplates ExerciseTemplate[]
+}
+
+model ExerciseType {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  muscles ExerciseTypeMuscle[]
+
+  images Image[]
+
+  exerciseTemplates ExerciseTemplate[]
+}
+
+// Most commonly used - recommendations only
+model CommonAngle {
+  id     Int @id @default(autoincrement())
+  degree Int @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Rep {
+  id    Int    @id @default(autoincrement())
+  range String @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// ====== USER CUSTOMIZATION PROGRAM =====
+
+// Each set's specifications
+model SetSpec {
+  id          String   @id @default(cuid())
+  setNum      Int
+  reps        String?
+  leftWeight  Float?
+  rightWeight Float?
+  angle       Int?
+  minBreakSec Int?
+  maxBreakSec Int?
+  eccentric   Int? // lowering phase — e.g. 3 seconds
+  pauseBottom Int? // pause at bottom — e.g. 1 second
+  concentric  Int? // lifting phase — e.g. 1 second
+  pauseTop    Int? // pause at top — e.g. 0 seconds
+  completed   Boolean  @default(false)
+  exerciseId  String
+  exercise    Exercise @relation(fields: [exerciseId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([exerciseId])
+}
+
+// Equipment that the user has
+model UserEquipment {
+  userId      String
+  EquipmentId Int
+
+  user      User      @relation(fields: [userId], references: [id])
+  equipment Equipment @relation(fields: [EquipmentId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@id([userId, EquipmentId])
+  @@index([EquipmentId])
+}
+
+// instance — user's actual logged exercise for a specific day
+model Exercise {
+  id                 String  @id @default(cuid())
+  exerciseDayId      String
+  exerciseTemplateId String? // null = fully custom, no template base
+  dayPosition        Int
+  isBFR              Boolean @default(false)
+
+  // user overrides — null means use template value
+  title        String? // null = use template title
+  description  String? // null = use template description
+  gripId       Int? // null = use template grip
+  equipmentId  Int? // null = use template equipment
+  normalThumb  Boolean? // null = use template value
+  prioritySide PrioritySide?
+  notes        String?
+
+  exerciseDay ExerciseDay @relation(fields: [exerciseDayId], references: [id])
+  grip        Grip?       @relation(fields: [gripId], references: [id])
+  equipment   Equipment?  @relation(fields: [equipmentId], references: [id])
+  setSpecs    SetSpec[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([exerciseDayId, dayPosition])
+  @@index([exerciseDayId])
+  @@index([exerciseTemplateId])
+  @@index([gripId])
+}
+
+model ExerciseDay {
+  id                String        @id @default(cuid())
+  title             String?
+  date              DateTime
+  isBFR             Boolean       @default(false)
+  prioriyMuscles    MuscleGroup[]
+  notes             String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  allowNotification Boolean       @default(false)
+  status            SessionStatus @default(PLANNED)
+
+  mesoId    String?
+  mesocycle Mesocycle? @relation(fields: [mesoId], references: [id])
+
+  exercises Exercise[]
+
+  exerciseDayTips ExerciseDayTip[]
+}
+
+model Mesocycle {
+  id                String    @id @default(cuid())
+  title             String?
+  startDate         DateTime  @default(now())
+  endDate           DateTime?
+  firstIterationEnd DateTime
+  notes             String?
+  isPublic          Boolean   @default(false)
+  split             Split?
+  allowNotification Boolean   @default(false)
+
+  trainingDays ExerciseDay[]
+
+  sheduleId String
+  schedule  Schedule @relation(fields: [sheduleId], references: [id])
+}
+
+model Schedule {
+  id String @id @default(cuid())
+
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id])
+  allowNotification Boolean @default(false)
+
+  mesocycles Mesocycle[]
+
+  @@index([userId])
+}
+
+// ====== USER ======
+
+model User {
+  id           String  @id @default(cuid())
+  name         String
+  nickname     String?
+  age          Float?
+  weight       Float?
+  targetWeight Float?
+  bodyFat      Float?
+
+  nutritionTarget NutritionTarget?
+
+  schedules   Schedule?
+  supplements Supplement[]
+  tips        Tip[]
+  Equipments  UserEquipment[]
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  photos Image[]
+}
+
+model NutritionTarget {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  proteinMinG    Float?
+  proteinMaxG    Float?
+  carbsMinG      Float?
+  carbsMaxG      Float?
+  fatMinG        Float?
+  fatMaxG        Float?
+  kcalMin        Float?
+  kcalMax        Float?
+  waterTrainingL Float?
+  waterRestL     Float?
+  fructoseMaxG   Float?
+  saltMaxG       Float?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// ====== LIFESTYLE ======
+
+// ====== AUTOMATED JOIN TABLES M:N ======
+
+model ExerciseTypeMuscle {
+  exerciseTypeId Int
+  muscleId       Int
+  role           MuscleRole @default(SECONDARY)
+
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id], onDelete: Cascade)
+  muscle       Muscle       @relation(fields: [muscleId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseTypeId, muscleId])
+  @@index([muscleId])
+}
+
+// ===== TEMPLATE DATA =====
+
+// template — system defined, shared across all users
+model ExerciseTemplate {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  typeId       Int
+  gripId       Int?
+  equipmentId  Int?
+  normalThumb  Boolean      @default(true)
+  prioritySide PrioritySide @default(BOTH)
+  isBFR        Boolean      @default(false)
+  notes        String?
+  isSystem     Boolean      @default(true)
+  createdBy    String? // null = system, userId = user created
+
+  type      ExerciseType @relation(fields: [typeId], references: [id])
+  grip      Grip?        @relation(fields: [gripId], references: [id])
+  equipment Equipment?   @relation(fields: [equipmentId], references: [id])
+
+  // default set specs for this template
+  setTemplates SetSpecTemplate[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([typeId])
+  @@index([gripId])
+  @@index([createdBy])
+}
+
+// default set specs on the template
+model SetSpecTemplate {
+  id                 String  @id @default(cuid())
+  exerciseTemplateId String
+  setNum             Int
+  reps               String? // "6-8"
+  targetLeftWeight   Float? // default weight suggestion
+  targetRightWeight  Float?
+  minBreakSec        Int?
+  maxBreakSec        Int?
+  eccentric          Int?
+  pauseBottom        Int?
+  concentric         Int?
+  pauseTop           Int?
+
+  template ExerciseTemplate @relation(fields: [exerciseTemplateId], references: [id])
+
+  @@index([exerciseTemplateId])
+}
+
+model ExerciseDayTemlpate {
+  id             String        @id @default(cuid())
+  title          String?
+  date           DateTime
+  isBFR          Boolean       @default(false)
+  prioriyMuscles MuscleGroup[]
+  notes          String?
+  startTime      DateTime?
+  endTime        DateTime
+}
+
+model Tip {
+  id        String           @id @default(cuid())
+  userId    String
+  content   String
+  category  String?
+  user      User             @relation(fields: [userId], references: [id])
+  days      ExerciseDayTip[]
+  createdAt DateTime         @default(now())
+  deletedAt DateTime?
+
+  @@index([userId])
+}
+
+model ExerciseDayTip {
+  tipId         String
+  exerciseDayId String
+
+  tip         Tip         @relation(fields: [tipId], references: [id])
+  exerciseDay ExerciseDay @relation(fields: [exerciseDayId], references: [id])
+
+  @@id([tipId, exerciseDayId])
+  @@index([exerciseDayId])
+}
+
+model Supplement {
+  id String @id @default(cuid())
+
+  users User[]
+}
