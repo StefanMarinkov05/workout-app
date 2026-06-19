@@ -359,7 +359,6 @@ model Mesocycle {
   title             String?
   startDate         DateTime  @default(now())
   endDate           DateTime?
-  firstIterationEnd DateTime
   notes             String?
   isPublic          Boolean   @default(false)
   split             Split?
@@ -448,6 +447,26 @@ model ExerciseTypeMuscle {
 
 // ===== TEMPLATE DATA =====
 
+// default set specs on the template
+model SetSpecTemplate {
+  id                 String  @id @default(cuid())
+  exerciseTemplateId String
+  setNum             Int
+  reps               String? // "6-8"
+  targetLeftWeight   Float? // default weight suggestion
+  targetRightWeight  Float?
+  minBreakSec        Int?
+  maxBreakSec        Int?
+  eccentric          Int?
+  pauseBottom        Int?
+  concentric         Int?
+  pauseTop           Int?
+
+  template ExerciseTemplate @relation(fields: [exerciseTemplateId], references: [id])
+
+  @@index([exerciseTemplateId])
+}
+
 // template — system defined, shared across all users
 model ExerciseTemplate {
   id           String       @id @default(cuid())
@@ -479,25 +498,6 @@ model ExerciseTemplate {
   @@index([createdBy])
 }
 
-// default set specs on the template
-model SetSpecTemplate {
-  id                 String  @id @default(cuid())
-  exerciseTemplateId String
-  setNum             Int
-  reps               String? // "6-8"
-  targetLeftWeight   Float? // default weight suggestion
-  targetRightWeight  Float?
-  minBreakSec        Int?
-  maxBreakSec        Int?
-  eccentric          Int?
-  pauseBottom        Int?
-  concentric         Int?
-  pauseTop           Int?
-
-  template ExerciseTemplate @relation(fields: [exerciseTemplateId], references: [id])
-
-  @@index([exerciseTemplateId])
-}
 
 model ExerciseDayTemlpate {
   id             String        @id @default(cuid())
@@ -508,8 +508,39 @@ model ExerciseDayTemlpate {
   notes          String?
   startTime      DateTime?
   endTime        DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  mesocycleTemplates MesocycleTemplate[]
 }
 
+model MesocycleTemplate {
+  id                String    @id @default(cuid())
+  title             String?
+  startDate         DateTime  @default(now())
+  endDate           DateTime?
+  notes             String?
+  isPublic          Boolean   @default(false)
+  split             Split?
+  allowNotification Boolean   @default(false)
+
+  trainingDaysTemplate ExerciseDayTemlpate[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  templateSheduleId String
+  scheduleTemplate  ScheduleTemplate @relation(fields: [templateSheduleId], references: [id])
+}
+
+model ScheduleTemplate {
+  id String @id @default(cuid())
+
+  mesocycleTemplates MesocycleTemplate[]
+}
 model Tip {
   id        String           @id @default(cuid())
   userId    String
