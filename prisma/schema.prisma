@@ -86,6 +86,14 @@ enum TipCategory {
   HEALTH
 }
 
+enum MeasurementContext {
+  STANDALONE // periodic weigh-in — not tied to a session
+  PRE_WORKOUT // measured before session — baseline
+  POST_WORKOUT // measured after session — pump, hydration effect
+  MORNING // fasted, first thing — most accurate for trends
+  EVENING // end of day — highest body weight typically
+}
+
 // ====== UTILS ======
 
 model Image {
@@ -118,15 +126,15 @@ model Image {
   @@index([exerciseTypeId, role])
   @@index([muscleId])
   @@index([userId])
-
 }
-model TipSuggestion {
-  id        String           @id @default(cuid())
-  content   String
-  category  TipCategory @default(NO_CATEGORY)
-  days      ExerciseDayTip[]
 
-  createdAt DateTime         @default(now())
+model TipSuggestion {
+  id       String        @id @default(cuid())
+  content  String
+  category TipCategory   @default(NO_CATEGORY)
+  days     ExerciseDay[]
+
+  createdAt DateTime  @default(now())
   deletedAt DateTime?
 }
 
@@ -281,21 +289,33 @@ model Rep {
 
 // Each set's specifications
 model SetSpec {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   setNum      Int
   reps        String?
   leftWeight  Float?
   rightWeight Float?
-  angle       Int?
   minBreakSec Int?
   maxBreakSec Int?
+
+  angle       Int?
   eccentric   Int? // lowering phase — e.g. 3 seconds
   pauseBottom Int? // pause at bottom — e.g. 1 second
   concentric  Int? // lifting phase — e.g. 1 second
   pauseTop    Int? // pause at top — e.g. 0 seconds
-  completed   Boolean  @default(false)
-  exerciseId  String
-  exercise    Exercise @relation(fields: [exerciseId], references: [id])
+  completed   Boolean @default(true)
+
+  actualLeftWeight         Float?
+  actualRigthWeight        Float?
+  actualReps               Int?
+  actualBreakSec           Int?
+  actualPerformanceTimeSec Int?
+  actualEccentric          Int?
+  actualPauseBottom        Int?
+  actualConcentric         Int?
+  actualPauseTop           Int?
+  isCheated                Boolean  @default(false)
+  exerciseId               String
+  exercise                 Exercise @relation(fields: [exerciseId], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -370,6 +390,8 @@ model ExerciseDay {
   exercises Exercise[]
 
   exerciseDayTips TipSuggestion[]
+
+  bodyMeasurements BodyMeasurement[]
 }
 
 model Mesocycle {
@@ -400,28 +422,137 @@ model Schedule {
   @@index([userId])
 }
 
-// ====== USER ======
+model BodyMeasurement {
+  id            String             @id @default(cuid())
+  userId        String
+  exerciseDayId String? // null = standalone, set = tied to session
+  context       MeasurementContext @default(STANDALONE)
+  measuredAt    DateTime           @default(now())
 
-model User {
-  id           String  @id @default(cuid())
-  name         String
-  nickname     String?
-  age          Float?
-  weight       Float?
-  targetWeight Float?
-  bodyFat      Float?
+  // body composition
+  weightKg     Float?
+  bodyFatPct   Float?
+  muscleMassKg Float? // if user has smart scale
 
-  nutritionTarget NutritionTarget?
+  // circumferences in cm
+  neck            Float?
+  chest           Float?
+  waist           Float?
+  hips            Float?
+  leftArm30Pct    Float?
+  leftArm50Pct    Float?
+  leftArm70Pct    Float?
+  leftDelt        Float?
+  leftForearm     Float?
+  leftWrist       Float?
+  leftCalf30Pct   Float?
+  leftCalf70Pct   Float?
+  leftThigh150Pct Float?
+  leftThigh30Pct  Float?
+  leftThigh50Pct  Float?
+  leftThigh75Pct  Float?
+  leftThigh90Pct  Float?
 
-  schedules   Schedule?
-  supplements Supplement[]
-  tips        Tip[]
-  Equipments  UserEquipment[]
+  rightArm30Pct    Float?
+  rightArm50Pct    Float?
+  rightArm70Pct    Float?
+  rightDelt        Float?
+  rightForearm     Float?
+  rightWrist       Float?
+  rightCalf30Pct   Float?
+  rightCalf70Pct   Float?
+  rightThigh150Pct Float?
+  rightThigh30Pct  Float?
+  rightThigh50Pct  Float?
+  rightThigh75Pct  Float?
+  rightThigh90Pct  Float?
+
+  notes String?
+
+  user        User         @relation(fields: [userId], references: [id])
+  exerciseDay ExerciseDay? @relation(fields: [exerciseDayId], references: [id])
 
   createdAt DateTime  @default(now())
   deletedAt DateTime?
 
-  photos Image[]
+  @@index([userId, measuredAt])
+  @@index([exerciseDayId])
+  @@index([userId, context])
+}
+
+model ProgressSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  weekStart DateTime // Monday of that week — one snapshot per week
+
+  // body
+  weightKg   Float? // from BodyMeasurement that week
+  bodyFatPct Float?
+
+  // volume
+  totalSets         Int   @default(0)
+  totalReps         Int   @default(0)
+  totalTonnageKg    Float @default(0) // sum of sets × reps × weight
+  sessionsCompleted Int   @default(0)
+  sessionsPlanned   Int   @default(0)
+
+  // strength — top estimated 1RM per muscle group that week
+  topLifts Json // { "Squat": 140, "Bench": 100, "Deadlift": 180 }
+
+  // consistency
+  streakDays      Int   @default(0)
+  weeklyAdherence Float @default(0) // 0-1 — completed/planned
+
+  computedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, weekStart]) // one per user per week
+  @@index([userId, weekStart])
+}
+
+// ====== USER ======
+
+model User {
+  id              String           @id @default(cuid())
+  name            String
+  nickname        String?
+  age             Float?
+  weight          Float?
+  targetWeight    Float?
+  bodyFat         Float?
+  motivation      String?
+  profilePicUrl   String?
+  nutritionTarget NutritionTarget?
+
+  photos       Image[]
+  schedules    Schedule?
+  supplements  Supplement[]
+  equipments   UserEquipment[]
+  bodyMeasures BodyMeasurement[]
+  userStats    UserStats[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+  deletedAt DateTime?
+
+  progressSnapshots ProgressSnapshot[]
+}
+
+model UserStats {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // all-time records — updated whenever beaten
+  peakWeightKg      Float?
+  peakTonnageWeekKg Float?
+  longestStreak     Int      @default(0)
+  totalWorkouts     Int      @default(0)
+  totalTonnageKg    Float    @default(0)
+  memberSince       DateTime
+
+  user      User     @relation(fields: [userId], references: [id])
+  updatedAt DateTime @updatedAt
 }
 
 model NutritionTarget {
@@ -522,7 +653,6 @@ model ExerciseTemplate {
   @@index([createdBy])
 }
 
-
 model ExerciseDayTemlpate {
   id             String        @id @default(cuid())
   title          String?
@@ -565,4 +695,3 @@ model ScheduleTemplate {
 
   mesocycleTemplates MesocycleTemplate[]
 }
-
