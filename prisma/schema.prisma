@@ -94,6 +94,27 @@ enum MeasurementContext {
   EVENING // end of day — highest body weight typically
 }
 
+enum PRType {
+  ESTIMATED_1RM
+  HEAVIEST_SET
+  MAX_REPS
+  MAX_VOLUME_SESSION
+}
+
+enum SetType {
+  WORKING // standard set
+  WARMUP // warmup — exclude from volume
+  DROP // weight dropped from previous set
+  BACKOFF // planned lighter set after heavy sets
+  FAILURE // taken to failure
+}
+
+enum ROM {
+  FULL
+  LOWER
+  UPPER
+}
+
 // ====== UTILS ======
 
 model Image {
@@ -264,6 +285,12 @@ model ExerciseType {
   images Image[]
 
   exerciseTemplates ExerciseTemplate[]
+
+  personalRecords PersonalRecord[]
+
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
+
+  progressionEvents ProgressionEvent[]
 }
 
 // Most commonly used - recommendations only
@@ -289,13 +316,17 @@ model Rep {
 
 // Each set's specifications
 model SetSpec {
-  id          String  @id @default(cuid())
-  setNum      Int
-  reps        String?
-  leftWeight  Float?
-  rightWeight Float?
-  minBreakSec Int?
-  maxBreakSec Int?
+  id            String  @id @default(cuid())
+  setNum        Int
+  setType       SetType @default(WORKING)
+  reps          String?
+  leftWeight    Float?
+  rightWeight   Float?
+  minBreakSec   Int?
+  maxBreakSec   Int?
+  isWarmup      Boolean @default(false)
+  asymmetryPct  Float?
+  rangeOfMotion ROM     @default(FULL)
 
   angle       Int?
   eccentric   Int? // lowering phase — e.g. 3 seconds
@@ -313,13 +344,16 @@ model SetSpec {
   actualPauseBottom        Int?
   actualConcentric         Int?
   actualPauseTop           Int?
-  isCheated                Boolean  @default(false)
-  exerciseId               String
-  exercise                 Exercise @relation(fields: [exerciseId], references: [id])
+  isCheated                Boolean @default(false)
+  estimated1RM             Float?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  personalRecords PersonalRecord[]
 
   @@index([exerciseId])
 }
@@ -384,6 +418,11 @@ model ExerciseDay {
   allowNotification Boolean       @default(false)
   status            SessionStatus @default(PLANNED)
 
+  totalTonnageKg  Float? // cached after session — sum of all sets × reps × weight
+  totalSets       Int?
+  totalReps       Int?
+  durationMinutes Int? // finishedAt - startedAt in minutes
+
   mesoId    String?
   mesocycle Mesocycle? @relation(fields: [mesoId], references: [id])
 
@@ -392,6 +431,8 @@ model ExerciseDay {
   exerciseDayTips TipSuggestion[]
 
   bodyMeasurements BodyMeasurement[]
+
+  workoutFeedbacks WorkoutFeedback[]
 }
 
 model Mesocycle {
@@ -404,10 +445,16 @@ model Mesocycle {
   split             Split?
   allowNotification Boolean   @default(false)
 
+  isDeload          Boolean @default(false)
+  volumeModifier    Float? // 0.6 = 60% of normal volume
+  intensityModifier Float? // 0.7 = 70% of normal intensity
+
   trainingDays ExerciseDay[]
 
   sheduleId String
   schedule  Schedule @relation(fields: [sheduleId], references: [id])
+
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
 }
 
 model Schedule {
@@ -503,12 +550,63 @@ model ProgressSnapshot {
   streakDays      Int   @default(0)
   weeklyAdherence Float @default(0) // 0-1 — completed/planned
 
+  avgRPE          Float? // average perceived effort that week
+  avgSleepQuality Float? // average sleep rating
+  avgEnergyLevel  Float? // average energy rating
+  deloadWeek      Boolean @default(false) // was this a deload week
+
   computedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
 
   @@unique([userId, weekStart]) // one per user per week
   @@index([userId, weekStart])
+}
+
+model ExerciseTypeFrequency {
+  id             String @id @default(cuid())
+  userId         String
+  exerciseTypeId Int
+  mesocycleId    String
+  weekNumber     Int
+  count          Int    @default(1) // times performed this week
+
+  user         User         @relation(fields: [userId], references: [id])
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+  mesocycle    Mesocycle    @relation(fields: [mesocycleId], references: [id])
+
+  @@unique([userId, exerciseTypeId, mesocycleId, weekNumber])
+  @@index([userId, mesocycleId])
+}
+
+model ProgressionEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  exerciseTypeId Int
+  previousWeight Float
+  newWeight      Float
+  reason         String? // "hit rep ceiling", "deload reset", "manual"
+  occurredAt     DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+
+  @@index([userId, exerciseTypeId])
+  @@index([occurredAt])
+}
+
+model WorkoutFeedback {
+  id              String   @id @default(cuid())
+  exerciseDayId   String   @unique
+  perceivedEffort Int? // RPE 1-10
+  energyLevel     Int? // 1-10
+  motivation      Int? // 1-10
+  sleepQuality    Int? // previous night 1-10
+  musclesoreness  Int? // 1-10
+  notes           String?
+  submittedAt     DateTime @default(now())
+
+  exerciseDay ExerciseDay @relation(fields: [exerciseDayId], references: [id])
 }
 
 // ====== USER ======
@@ -537,6 +635,12 @@ model User {
   deletedAt DateTime?
 
   progressSnapshots ProgressSnapshot[]
+
+  personalRecords PersonalRecord[]
+
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
+
+  progressionEvents ProgressionEvent[]
 }
 
 model UserStats {
@@ -553,6 +657,24 @@ model UserStats {
 
   user      User     @relation(fields: [userId], references: [id])
   updatedAt DateTime @updatedAt
+}
+
+model PersonalRecord {
+  id             String   @id @default(cuid())
+  userId         String
+  exerciseTypeId Int
+  type           PRType
+  value          Float
+  setSpecId      String? // which set produced it
+  achievedAt     DateTime @default(now())
+  notes          String?
+
+  user         User         @relation(fields: [userId], references: [id])
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+  setSpec      SetSpec?     @relation(fields: [setSpecId], references: [id])
+
+  @@index([userId, exerciseTypeId])
+  @@index([achievedAt])
 }
 
 model NutritionTarget {
