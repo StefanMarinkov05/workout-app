@@ -78,6 +78,14 @@ enum SessionStatus {
   PARTIAL
 }
 
+enum TipCategory {
+  NO_CATEGORY
+  NUTRITION
+  SUPPLEMENT
+  TECHNIQUE
+  HEALTH
+}
+
 // ====== UTILS ======
 
 model Image {
@@ -110,6 +118,16 @@ model Image {
   @@index([exerciseTypeId, role])
   @@index([muscleId])
   @@index([userId])
+
+}
+model TipSuggestion {
+  id        String           @id @default(cuid())
+  content   String
+  category  TipCategory @default(NO_CATEGORY)
+  days      ExerciseDayTip[]
+
+  createdAt DateTime         @default(now())
+  deletedAt DateTime?
 }
 
 // ====== EXERCISE SPECS ======
@@ -351,7 +369,7 @@ model ExerciseDay {
 
   exercises Exercise[]
 
-  exerciseDayTips ExerciseDayTip[]
+  exerciseDayTips TipSuggestion[]
 }
 
 model Mesocycle {
@@ -429,7 +447,13 @@ model NutritionTarget {
   deletedAt DateTime?
 }
 
-// ====== LIFESTYLE ======
+// ====== LIFESTYLE, DIET & NUTRITION ======
+
+model Supplement {
+  id String @id @default(cuid())
+
+  users User[]
+}
 
 // ====== AUTOMATED JOIN TABLES M:N ======
 
@@ -541,32 +565,4 @@ model ScheduleTemplate {
 
   mesocycleTemplates MesocycleTemplate[]
 }
-model Tip {
-  id        String           @id @default(cuid())
-  userId    String
-  content   String
-  category  String?
-  user      User             @relation(fields: [userId], references: [id])
-  days      ExerciseDayTip[]
-  createdAt DateTime         @default(now())
-  deletedAt DateTime?
 
-  @@index([userId])
-}
-
-model ExerciseDayTip {
-  tipId         String
-  exerciseDayId String
-
-  tip         Tip         @relation(fields: [tipId], references: [id])
-  exerciseDay ExerciseDay @relation(fields: [exerciseDayId], references: [id])
-
-  @@id([tipId, exerciseDayId])
-  @@index([exerciseDayId])
-}
-
-model Supplement {
-  id String @id @default(cuid())
-
-  users User[]
-}
