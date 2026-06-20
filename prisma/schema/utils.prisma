@@ -1,0 +1,9 @@
+model TipSuggestion {
+  id       String        @id @default(cuid())
+  content  String
+  category TipCategory   @default(NO_CATEGORY)
+  days     ExerciseDay[]
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+}

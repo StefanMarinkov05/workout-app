@@ -1,0 +1,93 @@
+// default set specs on the template
+model SetSpecTemplate {
+  id                 String  @id @default(cuid())
+  exerciseTemplateId String
+  setNum             Int
+  reps               String? // "6-8"
+  targetLeftWeight   Float? // default weight suggestion
+  targetRightWeight  Float?
+  minBreakSec        Int?
+  maxBreakSec        Int?
+  eccentric          Int?
+  pauseBottom        Int?
+  concentric         Int?
+  pauseTop           Int?
+
+  template ExerciseTemplate @relation(fields: [exerciseTemplateId], references: [id])
+
+  @@index([exerciseTemplateId])
+}
+
+// template — system defined, shared across all users
+model ExerciseTemplate {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  typeId       Int
+  gripId       Int?
+  equipmentId  Int?
+  normalThumb  Boolean      @default(true)
+  prioritySide PrioritySide @default(BOTH)
+  isBFR        Boolean      @default(false)
+  notes        String?
+  isSystem     Boolean      @default(true)
+  createdBy    String? // null = system, userId = user created
+
+  type      ExerciseType @relation(fields: [typeId], references: [id])
+  grip      Grip?        @relation(fields: [gripId], references: [id])
+  equipment Equipment?   @relation(fields: [equipmentId], references: [id])
+
+  // default set specs for this template
+  setTemplates SetSpecTemplate[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([typeId])
+  @@index([gripId])
+  @@index([createdBy])
+}
+
+model ExerciseDayTemlpate {
+  id             String        @id @default(cuid())
+  title          String?
+  date           DateTime
+  isBFR          Boolean       @default(false)
+  prioriyMuscles MuscleGroup[]
+  notes          String?
+  startTime      DateTime?
+  endTime        DateTime
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  mesocycleTemplates MesocycleTemplate[]
+}
+
+model MesocycleTemplate {
+  id                String    @id @default(cuid())
+  title             String?
+  startDate         DateTime  @default(now())
+  endDate           DateTime?
+  notes             String?
+  isPublic          Boolean   @default(false)
+  split             Split?
+  allowNotification Boolean   @default(false)
+
+  trainingDaysTemplate ExerciseDayTemlpate[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  templateSheduleId String
+  scheduleTemplate  ScheduleTemplate @relation(fields: [templateSheduleId], references: [id])
+}
+
+model ScheduleTemplate {
+  id String @id @default(cuid())
+
+  mesocycleTemplates MesocycleTemplate[]
+}

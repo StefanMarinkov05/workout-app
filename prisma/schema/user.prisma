@@ -1,0 +1,58 @@
+model User {
+  id              String           @id @default(cuid())
+  name            String
+  nickname        String?
+  age             Float?
+  weight          Float?
+  targetWeight    Float?
+  bodyFat         Float?
+  motivation      String?
+  profilePicUrl   String?
+  nutritionTarget NutritionTarget?
+
+  photos       Image[]
+  schedules    Schedule?
+  supplements  Supplement[]
+  equipments   UserEquipment[]
+  bodyMeasures BodyMeasurement[]
+  userStats    UserStats[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime?
+  deletedAt DateTime?
+
+  progressSnapshots ProgressSnapshot[]
+
+  personalRecords PersonalRecord[]
+
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
+
+  progressionEvents ProgressionEvent[]
+}
+
+model NutritionTarget {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  proteinMinG    Float?
+  proteinMaxG    Float?
+  carbsMinG      Float?
+  carbsMaxG      Float?
+  fatMinG        Float?
+  fatMaxG        Float?
+  kcalMin        Float?
+  kcalMax        Float?
+  waterTrainingL Float?
+  waterRestL     Float?
+  fructoseMaxG   Float?
+  saltMaxG       Float?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model UserSupplement {
+  id String @id @default(cuid())
+}

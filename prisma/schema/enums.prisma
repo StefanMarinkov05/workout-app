@@ -1,0 +1,106 @@
+enum ImageRole {
+  THUMBNAIL // static preview
+  DEMONSTRATION // full technique image
+  VIDEO // mp4 demonstration
+  MUSCLE_MAP // activation diagram
+  DIAGRAM // anatomical illustration
+  HIGHLIGHT // activated muscle highlight
+  AVATAR // user profile picture
+  PROGRESS_PHOTO // body progress
+}
+
+enum PrioritySide {
+  LEFT
+  RIGHT
+  BOTH
+}
+
+enum MuscleSize {
+  SMALL // biceps, calves, forearms
+  MEDIUM // shoulders, triceps, hamstrings
+  LARGE // back, chest, quadriceps, glutes
+}
+
+enum MuscleRole {
+  PRIMARY
+  SECONDARY
+  STABILIZER
+}
+
+enum MovementRole {
+  PRIMARY
+  ASSISTS
+}
+
+enum MovementPlane {
+  SAGITTAL
+  FRONTAL
+  TRANSVERSE
+}
+
+enum MuscleGroup {
+  PUSH
+  PULL
+  LEGS
+  UPPER_BODY
+  ARMS
+  BACK
+  CHEST
+  DELTS
+  MIX
+}
+
+enum Split {
+  NO_SPLIT
+  PUSH_PULL_LEGS
+  BRO_SPLIT
+  UPPER_LOWER
+  SEVEN_DAYS
+  OTHER
+}
+
+enum SessionStatus {
+  NO_STATUS
+  PLANNED
+  ACTIVE
+  COMPLETED
+  SKIPPED
+  PARTIAL
+}
+
+enum TipCategory {
+  NO_CATEGORY
+  NUTRITION
+  SUPPLEMENT
+  TECHNIQUE
+  HEALTH
+}
+
+enum MeasurementContext {
+  STANDALONE // periodic weigh-in — not tied to a session
+  PRE_WORKOUT // measured before session — baseline
+  POST_WORKOUT // measured after session — pump, hydration effect
+  MORNING // fasted, first thing — most accurate for trends
+  EVENING // end of day — highest body weight typically
+}
+
+enum PRType {
+  ESTIMATED_1RM
+  HEAVIEST_SET
+  MAX_REPS
+  MAX_VOLUME_SESSION
+}
+
+enum SetType {
+  WORKING // standard set
+  WARMUP // warmup — exclude from volume
+  DROP // weight dropped from previous set
+  BACKOFF // planned lighter set after heavy sets
+  FAILURE // taken to failure
+}
+
+enum ROM {
+  FULL
+  LOWER
+  UPPER
+}

@@ -1,0 +1,60 @@
+model ExerciseDay {
+  id                String        @id @default(cuid())
+  title             String?
+  date              DateTime
+  isBFR             Boolean       @default(false)
+  prioriyMuscles    MuscleGroup[]
+  notes             String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  allowNotification Boolean       @default(false)
+  status            SessionStatus @default(PLANNED)
+
+  totalTonnageKg  Float? // cached after session — sum of all sets × reps × weight
+  totalSets       Int?
+  totalReps       Int?
+  durationMinutes Int? // finishedAt - startedAt in minutes
+
+  mesoId    String?
+  mesocycle Mesocycle? @relation(fields: [mesoId], references: [id])
+
+  exercises Exercise[]
+
+  exerciseDayTips TipSuggestion[]
+
+  bodyMeasurements BodyMeasurement[]
+}
+
+model Mesocycle {
+  id                String    @id @default(cuid())
+  title             String?
+  startDate         DateTime  @default(now())
+  endDate           DateTime?
+  notes             String?
+  isPublic          Boolean   @default(false)
+  split             Split?
+  allowNotification Boolean   @default(false)
+
+  isDeload          Boolean @default(false)
+  volumeModifier    Float? // 0.6 = 60% of normal volume
+  intensityModifier Float? // 0.7 = 70% of normal intensity
+
+  trainingDays ExerciseDay[]
+
+  sheduleId String
+  schedule  Schedule @relation(fields: [sheduleId], references: [id])
+
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
+}
+
+model Schedule {
+  id String @id @default(cuid())
+
+  userId            String  @unique
+  user              User    @relation(fields: [userId], references: [id])
+  allowNotification Boolean @default(false)
+
+  mesocycles Mesocycle[]
+
+  @@index([userId])
+}

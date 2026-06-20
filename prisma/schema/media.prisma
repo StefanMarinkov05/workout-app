@@ -1,0 +1,31 @@
+model Image {
+  id        String    @id @default(cuid())
+  url       String
+  alt       String? // accessibility text
+  mimeType  String // "image/svg+xml", "image/jpeg", "video/mp4"
+  widthPx   Int?
+  heightPx  Int?
+  sizeBytes Int?
+  order     Int       @default(0) // display order
+  role      ImageRole // what this image represents
+
+  // owner — one populated per image
+  exerciseTypeId Int?
+  muscleId       Int?
+  gripId         Int?
+  EquipmentId    Int?
+  userId         String?
+
+  exerciseType ExerciseType? @relation(fields: [exerciseTypeId], references: [id])
+  muscle       Muscle?       @relation(fields: [muscleId], references: [id])
+  grip         Grip?         @relation(fields: [gripId], references: [id])
+  Equipment    Equipment?    @relation(fields: [EquipmentId], references: [id])
+  user         User?         @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([exerciseTypeId, role])
+  @@index([muscleId])
+  @@index([userId])
+}

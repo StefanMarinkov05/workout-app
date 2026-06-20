@@ -1,0 +1,164 @@
+// instance — user's actual logged exercise for a specific day
+model Exercise {
+  id                 String  @id @default(cuid())
+  exerciseDayId      String
+  exerciseTemplateId String? // null = fully custom, no template base
+  dayPosition        Int
+  isBFR              Boolean @default(false)
+
+  // user overrides — null means use template value
+  title        String? // null = use template title
+  description  String? // null = use template description
+  gripId       Int? // null = use template grip
+  equipmentId  Int? // null = use template equipment
+  normalThumb  Boolean? // null = use template value
+  prioritySide PrioritySide?
+  notes        String?
+
+  exerciseDay ExerciseDay @relation(fields: [exerciseDayId], references: [id])
+  grip        Grip?       @relation(fields: [gripId], references: [id])
+  equipment   Equipment?  @relation(fields: [equipmentId], references: [id])
+  setSpecs    SetSpec[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([exerciseDayId, dayPosition])
+  @@index([exerciseDayId])
+  @@index([exerciseTemplateId])
+  @@index([gripId])
+}
+
+// Equipment that the user has
+model UserEquipment {
+  userId      String
+  EquipmentId Int
+
+  user      User      @relation(fields: [userId], references: [id])
+  equipment Equipment @relation(fields: [EquipmentId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@id([userId, EquipmentId])
+  @@index([EquipmentId])
+}
+
+// Each set's specifications
+model SetSpec {
+  id            String  @id @default(cuid())
+  setNum        Int
+  setType       SetType @default(WORKING)
+  reps          String?
+  leftWeight    Float?
+  rightWeight   Float?
+  minBreakSec   Int?
+  maxBreakSec   Int?
+  isWarmup      Boolean @default(false)
+  asymmetryPct  Float?
+  rangeOfMotion ROM     @default(FULL)
+
+  angle       Int?
+  eccentric   Int? // lowering phase — e.g. 3 seconds
+  pauseBottom Int? // pause at bottom — e.g. 1 second
+  concentric  Int? // lifting phase — e.g. 1 second
+  pauseTop    Int? // pause at top — e.g. 0 seconds
+  completed   Boolean @default(true)
+
+  actualLeftWeight         Float?
+  actualRigthWeight        Float?
+  actualReps               Int?
+  actualBreakSec           Int?
+  actualPerformanceTimeSec Int?
+  actualEccentric          Int?
+  actualPauseBottom        Int?
+  actualConcentric         Int?
+  actualPauseTop           Int?
+  isCheated                Boolean @default(false)
+  estimated1RM             Float?
+
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+  personalRecords PersonalRecord[]
+
+  @@index([exerciseId])
+}
+
+// Grip types - underhand, overhand
+
+model Grip {
+  id          Int    @id @default(autoincrement())
+  type        String @unique
+  description String
+  imageURL    String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  images Image[]
+
+  exercises Exercise[]
+
+  exerciseTemplates ExerciseTemplate[]
+}
+
+model Equipment {
+  id             Int             @id @default(autoincrement())
+  name           String          @unique
+  description    String?
+  userEquipments UserEquipment[]
+  exercises      Exercise[]
+  imageURL       String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  images Image[]
+
+  exerciseTemplates ExerciseTemplate[]
+}
+
+model ExerciseType {
+  id          Int     @id @default(autoincrement())
+  name        String  @unique
+  description String?
+
+  muscles ExerciseTypeMuscle[]
+
+  images Image[]
+
+  exerciseTemplates ExerciseTemplate[]
+
+  personalRecords PersonalRecord[]
+
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
+
+  progressionEvents ProgressionEvent[]
+}
+
+// Most commonly used - recommendations only
+model CommonAngle {
+  id     Int @id @default(autoincrement())
+  degree Int @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model Rep {
+  id    Int    @id @default(autoincrement())
+  range String @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}

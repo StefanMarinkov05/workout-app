@@ -1,0 +1,163 @@
+// ====== CACHING ONLY ======
+
+model ProgressSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  weekStart DateTime // Monday of that week — one snapshot per week
+
+  // body
+  weightKg   Float? // from BodyMeasurement that week
+  bodyFatPct Float?
+
+  // volume
+  totalSets         Int   @default(0)
+  totalReps         Int   @default(0)
+  totalTonnageKg    Float @default(0) // sum of sets × reps × weight
+  sessionsCompleted Int   @default(0)
+  sessionsPlanned   Int   @default(0)
+
+  // strength — top estimated 1RM per muscle group that week
+  topLifts Json // { "Squat": 140, "Bench": 100, "Deadlift": 180 }
+
+  // consistency
+  streakDays      Int   @default(0)
+  weeklyAdherence Float @default(0) // 0-1 — completed/planned
+
+  avgRPE          Float? // average perceived effort that week
+  avgSleepQuality Float? // average sleep rating
+  avgEnergyLevel  Float? // average energy rating
+  deloadWeek      Boolean @default(false) // was this a deload week
+
+  computedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, weekStart]) // one per user per week
+  @@index([userId, weekStart])
+}
+
+model ExerciseTypeFrequency {
+  id             String @id @default(cuid())
+  userId         String
+  exerciseTypeId Int
+  mesocycleId    String
+  weekNumber     Int
+  count          Int    @default(1) // times performed this week
+
+  user         User         @relation(fields: [userId], references: [id])
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+  mesocycle    Mesocycle    @relation(fields: [mesocycleId], references: [id])
+
+  @@unique([userId, exerciseTypeId, mesocycleId, weekNumber])
+  @@index([userId, mesocycleId])
+}
+
+model ProgressionEvent {
+  id             String   @id @default(cuid())
+  userId         String
+  exerciseTypeId Int
+  previousWeight Float
+  newWeight      Float
+  reason         String? // "hit rep ceiling", "deload reset", "manual"
+  occurredAt     DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+
+  @@index([userId, exerciseTypeId])
+  @@index([occurredAt])
+}
+
+// ===== AGGREGATION ONLY ======
+
+model UserStats {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // all-time records — updated whenever beaten
+  peakWeightKg      Float?
+  peakTonnageWeekKg Float?
+  longestStreak     Int      @default(0)
+  totalWorkouts     Int      @default(0)
+  totalTonnageKg    Float    @default(0)
+  memberSince       DateTime
+
+  user      User     @relation(fields: [userId], references: [id])
+  updatedAt DateTime @updatedAt
+}
+
+model PersonalRecord {
+  id             String   @id @default(cuid())
+  userId         String
+  exerciseTypeId Int
+  type           PRType
+  value          Float
+  setSpecId      String? // which set produced it
+  achievedAt     DateTime @default(now())
+  notes          String?
+
+  user         User         @relation(fields: [userId], references: [id])
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id])
+  setSpec      SetSpec?     @relation(fields: [setSpecId], references: [id])
+
+  @@index([userId, exerciseTypeId])
+  @@index([achievedAt])
+}
+
+model BodyMeasurement {
+  id            String             @id @default(cuid())
+  userId        String
+  exerciseDayId String? // null = standalone, set = tied to session
+  context       MeasurementContext @default(STANDALONE)
+  measuredAt    DateTime           @default(now())
+
+  // body composition
+  weightKg     Float?
+  bodyFatPct   Float?
+  muscleMassKg Float? // if user has smart scale
+
+  // circumferences in cm
+  neck            Float?
+  chest           Float?
+  waist           Float?
+  hips            Float?
+  leftArm30Pct    Float?
+  leftArm50Pct    Float?
+  leftArm70Pct    Float?
+  leftDelt        Float?
+  leftForearm     Float?
+  leftWrist       Float?
+  leftCalf30Pct   Float?
+  leftCalf70Pct   Float?
+  leftThigh150Pct Float?
+  leftThigh30Pct  Float?
+  leftThigh50Pct  Float?
+  leftThigh75Pct  Float?
+  leftThigh90Pct  Float?
+
+  rightArm30Pct    Float?
+  rightArm50Pct    Float?
+  rightArm70Pct    Float?
+  rightDelt        Float?
+  rightForearm     Float?
+  rightWrist       Float?
+  rightCalf30Pct   Float?
+  rightCalf70Pct   Float?
+  rightThigh150Pct Float?
+  rightThigh30Pct  Float?
+  rightThigh50Pct  Float?
+  rightThigh75Pct  Float?
+  rightThigh90Pct  Float?
+
+  notes String?
+
+  user        User         @relation(fields: [userId], references: [id])
+  exerciseDay ExerciseDay? @relation(fields: [exerciseDayId], references: [id])
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([userId, measuredAt])
+  @@index([exerciseDayId])
+  @@index([userId, context])
+}

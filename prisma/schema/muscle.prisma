@@ -1,0 +1,87 @@
+model Muscle {
+  id   Int    @id @default(autoincrement())
+  name String @unique // "Rectus Femoris" — source of truth
+  // key derived: "rectus_femoris"
+
+  fibreType1Pct  Int? // slow twitch %
+  fibreType2Pct  Int? // fast twitch %
+  benefitFromBFR Boolean @default(false)
+  recoveryHours  Int? // typical recovery time — 24, 48, 72
+
+  sizeClass MuscleSize? // for volume landmark reference
+
+  originId    Int?
+  origin      MuscleEndRegion? @relation("MuscleOrigin", fields: [originId], references: [id])
+  insertionId Int?
+  insertion   MuscleEndRegion? @relation("MuscleInsertion", fields: [insertionId], references: [id])
+
+  // hierarchy
+  parentId Int?
+  parent   Muscle?  @relation("MuscleGroup", fields: [parentId], references: [id])
+  children Muscle[] @relation("MuscleGroup")
+
+  movements     MuscleMovement[]
+  exerciseTypes ExerciseTypeMuscle[]
+  diagramUrl    String?
+  highlightUrl  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  images    Image[]
+
+  @@index([parentId])
+}
+
+model Movement {
+  id        Int            @id @default(autoincrement())
+  name      String         @unique // "Knee Extension", "Hip Flexion"
+  plane     MovementPlane?
+  technique String?
+  demoUrl   String?
+
+  // explicit junction — keeps role
+  muscles MuscleMovement[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+// the junction — with role
+model MuscleMovement {
+  muscleId   Int
+  movementId Int
+  role       MovementRole @default(PRIMARY)
+
+  muscle   Muscle   @relation(fields: [muscleId], references: [id], onDelete: Cascade)
+  movement Movement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+
+  @@id([muscleId, movementId])
+  @@index([movementId])
+}
+
+// origin and insertion of muscle - graphical representation
+model MuscleEndRegion {
+  id       Int      @id @default(autoincrement())
+  name     String   @unique
+  imageURL String?
+  origin   Muscle[] @relation("MuscleOrigin")
+  isertion Muscle[] @relation("MuscleInsertion")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model ExerciseTypeMuscle {
+  exerciseTypeId Int
+  muscleId       Int
+  role           MuscleRole @default(SECONDARY)
+
+  exerciseType ExerciseType @relation(fields: [exerciseTypeId], references: [id], onDelete: Cascade)
+  muscle       Muscle       @relation(fields: [muscleId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseTypeId, muscleId])
+  @@index([muscleId])
+}
