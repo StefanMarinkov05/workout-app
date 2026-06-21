@@ -11,9 +11,12 @@ model User {
   bodyFat       Float?
   profilePicUrl String?
   scheduleId    String?
-  
-  primaryGoal   TrainingGoal?
-  secondaryGoal TrainingGoal?
+
+  primaryGoal                 TrainingGoal?
+  secondaryGoal               TrainingGoal?
+  riskTollerance              RiskTolerance?
+  dietaryPattern              DietaryPattern?   @default(OMNIVORE)
+  generalStimulantSensitivity SensitivityLevel? @default(NORMAL)
 
   photos       Image[]
   schedules    Schedule?
@@ -28,10 +31,11 @@ model User {
 
   nutritionTarget NutritionTarget?
 
-  supplements       UserSupplement[]
-  medicalConditions UserMedicalCondition[]
-  userMedications   UserMedication[]
-  userAllergies     UserAllergy[]
+  supplements                 UserSupplement[]
+  medicalConditions           UserMedicalCondition[]
+  userMedications             UserMedication[]
+  userAllergies               UserAllergy[]
+  userSupplementSensitivities UserSupplementSensitivity[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime?
@@ -130,4 +134,21 @@ model UserAllergy {
   // hard delete only
 
   @@unique([userId, allergenId])
+}
+
+model UserSupplementSensitivity {
+  id               String           @id @default(cuid())
+  userId           String
+  supplementTypeId Int
+  level            SensitivityLevel
+  notes            String?
+
+  user           User           @relation(fields: [userId], references: [id])
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, supplementTypeId])
 }

@@ -200,14 +200,33 @@ enum LeverCategory {
 }
 
 enum HormonalEffectDirection {
-  SUPPORTS    // evidence the supplement raises/supports this hormone
-  SUPPRESSES  // evidence the supplement lowers/inhibits this hormone
-  MODULATES   // affects sensitivity/receptor activity rather than level
+  SUPPORTS // evidence the supplement raises/supports this hormone
+  SUPPRESSES // evidence the supplement lowers/inhibits this hormone
+  MODULATES // affects sensitivity/receptor activity rather than level
 }
 
 enum EvidenceTier {
-  STRONG     // multiple high-quality human studies, consistent findings
-  MODERATE   // some good human studies, smaller or less consistent
-  LIMITED    // weak/preliminary human evidence, mostly mechanistic
-  EMERGING   // very new research area, not yet replicated
+  STRONG // multiple high-quality human studies, consistent findings
+  MODERATE // some good human studies, smaller or less consistent
+  LIMITED // weak/preliminary human evidence, mostly mechanistic
+  EMERGING // very new research area, not yet replicated
+}
+
+enum RiskTolerance {
+  CONSERVATIVE
+  STANDARD
+  AGGRESSIVE
+}
+
+enum DietaryPattern {
+  OMNIVORE
+  VEGETARIAN
+  VEGAN
+}
+
+enum SensitivityLevel {
+  INTOLERANT // avoid entirely — adverse reaction even at low dose
+  SENSITIVE // tolerate at reduced dose only
+  NORMAL // standard dosing fine
+  RESISTANT // requires higher than typical dose for effect
 }

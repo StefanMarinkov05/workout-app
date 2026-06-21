@@ -21,6 +21,8 @@ model SupplementType {
   deletedAt DateTime?
 
   supplementHormonalEffects SupplementHormonalEffect[]
+
+  userSupplementSensitivities UserSupplementSensitivity[]
 }
 
 model SupplementDoseRange {
@@ -65,12 +67,11 @@ model SupplementClash {
   supplementBId      Int
   medicalConditionId Int? // null = always applies, or condition-specific
   severity           ClashSeverity
-  evidenceTier EvidenceTier
-  sourceUrl  String
-  verifiedAt DateTime
+  evidenceTier       EvidenceTier
+  sourceUrl          String
+  verifiedAt         DateTime
   reason             String
   minSpacingHours    Int? // null = no specific spacing helps
-
 
   supplementA      SupplementType    @relation("ClashA", fields: [supplementAId], references: [id], onDelete: Cascade)
   supplementB      SupplementType    @relation("ClashB", fields: [supplementBId], references: [id], onDelete: Cascade)
@@ -102,7 +103,7 @@ model SupplementMedicalConditionClash {
   supplementTypeId   Int
   medicalConditionId Int
   severity           ClashSeverity
-  evidenceTier EvidenceTier
+  evidenceTier       EvidenceTier
   reason             String
   sourceUrl          String
   verifiedAt         DateTime
@@ -132,7 +133,7 @@ model SupplementMedicationClash {
   supplementTypeId Int
   medicationId     Int
   severity         ClashSeverity
-  evidenceTier EvidenceTier
+  evidenceTier     EvidenceTier
   reason           String
   sourceUrl        String
   verifiedAt       DateTime
@@ -166,7 +167,7 @@ model SupplementAllergen {
   supplementTypeId Int
   allergenId       Int
   severity         ClashSeverity @default(AVOID)
-  evidenceTier EvidenceTier
+  evidenceTier     EvidenceTier
   reason           String
   sourceUrl        String
   verifiedAt       DateTime
@@ -180,8 +181,8 @@ model SupplementAllergen {
 // ===== SUPPLEMENT + HORMONE =====
 
 model Hormone {
-  id          Int @id @default(autoincrement())
-  name        String @unique
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
   description String
   aliases     String[]
 
@@ -192,18 +193,18 @@ model Hormone {
 }
 
 model SupplementHormonalEffect {
-  id String @id @default(cuid())
+  id               String @id @default(cuid())
   supplementTypeId Int
-  hormoneId Int
+  hormoneId        Int
 
-  direction        HormonalEffectDirection
-  evidenceTier     EvidenceTier
-  reason           String?
-  sourceUrl        String
-  verifiedAt       DateTime
+  direction    HormonalEffectDirection
+  evidenceTier EvidenceTier
+  reason       String?
+  sourceUrl    String
+  verifiedAt   DateTime
 
   supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
-  hormone Hormone @relation(fields: [hormoneId], references: [id])
+  hormone        Hormone        @relation(fields: [hormoneId], references: [id])
 
   @@unique([supplementTypeId, hormoneId])
   @@index([hormoneId])
