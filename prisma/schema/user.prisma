@@ -70,15 +70,23 @@ model NutritionTarget {
 }
 
 model UserSupplement {
-  id               String           @id @default(cuid())
+  id               String @id @default(cuid())
   supplementTypeId Int
   userId           String
-  dailyDose        Float?
-  dailyCapsules    Int?
-  weeklyFrequency  WeeklyFrequency?
 
-  quantity  Float?      @default(0)
-  dayTiming DayTiming[]
+  dailyDose       Float?
+  dailyCapsules   Int?
+  weeklyFrequency WeeklyFrequency?
+  dayTiming       DayTiming[]
+
+  // container — what was purchased
+  containerSize     Float? // total amount in the unit defined by
+  // supplementType.measurementUnit — e.g.
+  // 300 (grams) for a powder tub, or
+  // 90 (capsules) for a pill bottle
+  containerUnit     QuantityUnit? // GRAMS or CAPSULES — see below
+  remainingQuantity Float? // current stock, decremented as doses
+  // are logged, same unit as containerSize
 
   supplementDoses          SupplementDose[]
   supplementProtocolPhases SupplementProtocolPhase[]

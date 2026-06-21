@@ -269,3 +269,9 @@ enum DoseStatus {
   SKIPPED
   MISSED
 }
+
+enum QuantityUnit {
+  GRAMS
+  CAPSULES
+  MILLILITERS
+}
