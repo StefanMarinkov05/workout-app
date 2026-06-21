@@ -31,20 +31,21 @@ model UserSupplement {
 
 // the supplement itself — reference data, shared definition
 model SupplementType {
-  id              Int    @id @default(autoincrement())
-  name            String @unique
+  id              Int      @id @default(autoincrement())
+  name            String   @unique
   measurementUnit String // "g", "mg", "mcg", "IU"
   description     String
-  allicaes String[] // Vit. D3 == D3 == Cholecalciferol = Vitamin d...
+  allicaes        String[] // Vit. D3 == D3 == Cholecalciferol = Vitamin d...
 
-  userSupplements      UserSupplement[]
   doseRanges           SupplementDoseRange[]
-  medicalClashes       SupplementMedicalConditionClash[]
-  medicationClashes    SupplementMedicationClash[]
-  clashesA             SupplementClash[]                 @relation("ClashA")
-  clashesB             SupplementClash[]                 @relation("ClashB")
   supplementCoFactorsA SupplementCoFactor[]              @relation("CofactorA")
   supplementCoFactorsB SupplementCoFactor[]              @relation("CofactorB")
+  clashesA             SupplementClash[]                 @relation("ClashA")
+  clashesB             SupplementClash[]                 @relation("ClashB")
+  userSupplements      UserSupplement[]
+  medicalClashes       SupplementMedicalConditionClash[]
+  medicationClashes    SupplementMedicationClash[]
+  supplementAllergens  SupplementAllergen[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -113,7 +114,7 @@ model MedicalCondition {
   name        String                    @unique
   description String?
   category    MedicalConditionCategory?
-  allicaes     String[] // ["renal disease", "CKD"] — intake matching
+  allicaes    String[] // ["renal disease", "CKD"] — intake matching
 
   doseRanges        SupplementDoseRange[]
   clashes           SupplementMedicalConditionClash[]
@@ -161,14 +162,15 @@ model SupplementMedicalConditionClash {
 
 // prescribed drugs antibiotics etc...
 model Medication {
-  id          Int    @id @default(autoincrement())
-  name        String @unique
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
   description String
-  allicaes String[]
+  allicaes    String[]
 
   supplementMedicationClashes SupplementMedicationClash[]
   userMedications             UserMedication[]
 }
+
 model UserMedication {
   id           String @id @default(cuid())
   userId       String
@@ -187,6 +189,7 @@ model UserMedication {
   @@unique([userId, medicationId])
   @@index([medicationId])
 }
+
 model SupplementMedicationClash {
   id               String        @id @default(cuid())
   supplementTypeId Int
@@ -212,8 +215,36 @@ model SupplementMedicationClash {
 // ===== SUPPLEMENT + ALLERGIES =====
 
 model Allergen {
-  id Int @id @default(autoincrement())
-  name String @unique
-  description String
-  allicaes String[]
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  aliases     String[]
+
+  supplementAllergens SupplementAllergen[]
+  userAllergies       UserAllergy[]
+}
+
+model SupplementAllergen {
+  supplementTypeId Int
+  allergenId       Int
+  severity         ClashSeverity @default(AVOID)
+
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
+  allergen       Allergen       @relation(fields: [allergenId], references: [id], onDelete: Cascade)
+
+  @@id([supplementTypeId, allergenId])
+}
+
+model UserAllergy {
+  id         String @id @default(cuid())
+  userId     String
+  allergenId Int
+
+  user     User     @relation(fields: [userId], references: [id])
+  allergen Allergen @relation(fields: [allergenId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, allergenId])
 }

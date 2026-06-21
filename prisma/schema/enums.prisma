@@ -117,6 +117,7 @@ enum ClashSeverity {
   MEDIUM
   HIGH
   CRITICAL
+  AVOID
 }
 
 enum WeeklyFrequency {

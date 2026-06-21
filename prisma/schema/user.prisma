@@ -26,6 +26,7 @@ model User {
   nutritionTarget   NutritionTarget?
   medicalConditions UserMedicalCondition[]
   userMedications   UserMedication[]
+  userAllergies     UserAllergy[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime?
