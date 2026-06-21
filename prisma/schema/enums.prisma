@@ -108,7 +108,6 @@ enum ROM {
 enum Sex {
   MALE
   FEMALE
-  OTHER
 }
 
 enum ClashSeverity {
@@ -118,6 +117,7 @@ enum ClashSeverity {
   HIGH
   CRITICAL
   AVOID
+  SPACE
 }
 
 enum WeeklyFrequency {
@@ -178,4 +178,36 @@ enum MedicalConditionCategory {
   PSYCHIATRIC
   REPRODUCTIVE
   OTHER
+}
+
+enum TrainingGoal {
+  HYPERTROPHY
+  STRENGTH
+  FAT_LOSS
+  ENDURANCE
+  RECOMPOSITION
+  MAINTENANCE
+}
+
+enum LeverCategory {
+  PERFORMANCE
+  RECOVERY
+  COMPOSITION
+  HORMONAL
+  COGNITIVE
+  STRUCTURAL
+  NUTRITIONAL_GAP
+}
+
+enum HormonalEffectDirection {
+  SUPPORTS    // evidence the supplement raises/supports this hormone
+  SUPPRESSES  // evidence the supplement lowers/inhibits this hormone
+  MODULATES   // affects sensitivity/receptor activity rather than level
+}
+
+enum EvidenceTier {
+  STRONG     // multiple high-quality human studies, consistent findings
+  MODERATE   // some good human studies, smaller or less consistent
+  LIMITED    // weak/preliminary human evidence, mostly mechanistic
+  EMERGING   // very new research area, not yet replicated
 }

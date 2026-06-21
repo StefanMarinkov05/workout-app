@@ -11,6 +11,9 @@ model User {
   bodyFat       Float?
   profilePicUrl String?
   scheduleId    String?
+  
+  primaryGoal   TrainingGoal?
+  secondaryGoal TrainingGoal?
 
   photos       Image[]
   schedules    Schedule?
