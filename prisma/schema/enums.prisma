@@ -104,3 +104,77 @@ enum ROM {
   LOWER
   UPPER
 }
+
+enum Sex {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ClashSeverity {
+  NO_CLASH
+  TINY
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum WeeklyFrequency {
+  STOPPED
+  ONCE_WEEKLY
+  TWICE_WEEKLY
+  THREE_TIMES_WEEKLY
+  EVERY_OTHER_DAY
+  DAILY
+  TWICE_DAILY
+  THREE_TIMES_DAILY
+  WORKOUT_DAYS_ONLY
+}
+
+enum DayTiming {
+  FASTED_WAKE
+  MEAL_1
+  MEAL_2
+  MEAL_3
+  PRE_WORKOUT
+  INTRA_WORKOUT
+  POST_WORKOUT
+  PRE_SLEEP
+}
+
+enum MealTiming {
+  BEGGING
+  MIDDLE
+  END
+}
+
+enum MealType {
+  FASTING
+  PROTEIN
+  CARBS
+  FATS
+  FIBERS
+  SUGAR
+}
+
+enum CofactorType {
+  ENHANCES_ABSORPTION // e.g. Vitamin D + K2, fat-soluble + fat
+  ENHANCES_EFFICACY // e.g. Creatine + carbs (insulin-mediated uptake)
+  REQUIRED_TOGETHER // e.g. Calcium + Magnesium balance
+  SYNERGISTIC_EFFECT // combined effect greater than sum of parts
+}
+
+enum MedicalConditionCategory {
+  CARDIOVASCULAR
+  RENAL
+  METABOLIC
+  RESPIRATORY
+  ENDOCRINE
+  NEUROLOGICAL
+  GASTROINTESTINAL
+  MUSCULOSKELETAL
+  HEMATOLOGIC
+  PSYCHIATRIC
+  REPRODUCTIVE
+  OTHER
+}

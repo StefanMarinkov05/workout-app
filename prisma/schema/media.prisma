@@ -13,13 +13,13 @@ model Image {
   exerciseTypeId Int?
   muscleId       Int?
   gripId         Int?
-  EquipmentId    Int?
+  equipmentId    Int?
   userId         String?
 
   exerciseType ExerciseType? @relation(fields: [exerciseTypeId], references: [id])
   muscle       Muscle?       @relation(fields: [muscleId], references: [id])
   grip         Grip?         @relation(fields: [gripId], references: [id])
-  Equipment    Equipment?    @relation(fields: [EquipmentId], references: [id])
+  equipment    Equipment?    @relation(fields: [equipmentId], references: [id])
   user         User?         @relation(fields: [userId], references: [id])
 
   createdAt DateTime  @default(now())

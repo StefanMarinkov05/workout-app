@@ -1,0 +1,206 @@
+model Hormone {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model UserSupplement {
+  id               String @id @default(cuid())
+  supplementTypeId Int
+  userId           String
+  dailyDose        Float
+  dailyCapsules    Int?
+  quantity         Float? @default(0)
+
+  dayTiming       DayTiming[]
+  weeklyFrequency WeeklyFrequency
+
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([supplementTypeId, userId])
+}
+
+// the supplement itself — reference data, shared definition
+model SupplementType {
+  id              Int    @id @default(autoincrement())
+  name            String @unique
+  measurementUnit String // "g", "mg", "mcg", "IU"
+  description     String
+
+  userSupplements      UserSupplement[]
+  doseRanges           SupplementDoseRange[]
+  medicalClashes       SupplementMedicalConditionClash[]
+  medicationClashes    SupplementMedicationClash[]
+  clashesA             SupplementClash[]                 @relation("ClashA")
+  clashesB             SupplementClash[]                 @relation("ClashB")
+  supplementCoFactorsA SupplementCoFactor[]              @relation("CofactorA")
+  supplementCoFactorsB SupplementCoFactor[]              @relation("CofactorB")
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+model SupplementDoseRange {
+  id                 String    @id @default(cuid())
+  supplementTypeId   Int
+  sex                Sex?
+  minAgeYears        Int?
+  maxAgeYears        Int?
+  medicalConditionId Int?     // one condition per row — multiple rows for multiple conditions
+  pregnant           Boolean? // null = cannot get pregnant
+  lowerLimit         Float?
+  upperLimit         Float?
+  toleranceLimit     Float?
+  sourceUrl          String
+  verifiedAt         DateTime
+
+  supplementType   SupplementType    @relation(fields: [supplementTypeId], references: [id])
+  medicalCondition MedicalCondition? @relation(fields: [medicalConditionId], references: [id])
+
+  @@index([supplementTypeId, medicalConditionId])
+}
+
+model SupplementCoFactor {
+  supplementAId Int // always store the SMALLER id here
+  supplementBId Int // always store the LARGER id here
+  type          CofactorType
+  reason        String
+  sourceUrl     String
+  verifiedAt    DateTime
+
+  supplementA SupplementType @relation("CofactorA", fields: [supplementAId], references: [id], onDelete: Cascade)
+  supplementB SupplementType @relation("CofactorB", fields: [supplementBId], references: [id], onDelete: Cascade)
+
+  @@id([supplementAId, supplementBId])
+  @@index([supplementBId])
+}
+
+model SupplementClash {
+  id                 String        @id @default(cuid())
+  supplementAId      Int
+  supplementBId      Int
+  medicalConditionId Int?          // null = always applies, or condition-specific
+  severity           ClashSeverity
+  reason             String
+  minSpacingHours    Int?          // null = no specific spacing helps
+
+  sourceUrl  String
+  verifiedAt DateTime
+
+  supplementA      SupplementType    @relation("ClashA", fields: [supplementAId], references: [id], onDelete: Cascade)
+  supplementB      SupplementType    @relation("ClashB", fields: [supplementBId], references: [id], onDelete: Cascade)
+  medicalCondition MedicalCondition? @relation(fields: [medicalConditionId], references: [id])
+
+  @@unique([supplementAId, supplementBId, medicalConditionId])
+  @@index([supplementBId])
+}
+
+model MedicalCondition {
+  id          Int                       @id @default(autoincrement())
+  name        String                    @unique
+  description String?
+  category    MedicalConditionCategory?
+  aliases     String[] // ["renal disease", "CKD"] — intake matching
+
+  doseRanges     SupplementDoseRange[]
+  clashes        SupplementMedicalConditionClash[]
+  supplementClashes SupplementClash[]
+  userConditions UserMedicalCondition[]
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+}
+
+model UserMedicalCondition {
+  id                     String    @id @default(cuid())
+  userId                 String
+  medicalConditionTypeId Int
+  diagnosedDate          DateTime?
+  severity               String?
+
+  user             User             @relation(fields: [userId], references: [id])
+  medicalCondition MedicalCondition @relation(fields: [medicalConditionTypeId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, medicalConditionTypeId])
+  @@index([medicalConditionTypeId])
+}
+
+model SupplementMedicalConditionClash {
+  id                 String           @id @default(cuid())
+  supplementTypeId   Int
+  medicalConditionId Int
+  severity           ClashSeverity
+  reason             String
+  sourceUrl          String
+  verifiedAt         DateTime
+
+  supplementType   SupplementType   @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
+  medicalCondition MedicalCondition @relation(fields: [medicalConditionId], references: [id], onDelete: Cascade)
+
+  @@unique([supplementTypeId, medicalConditionId])
+  @@index([medicalConditionId])
+}
+
+// prescribed drugs antibiotics etc...
+model SupplementMedicationClash {
+  id               String        @id @default(cuid())
+  supplementTypeId Int
+  medicationId     Int
+  severity         ClashSeverity
+  reason           String
+  sourceUrl        String
+  verifiedAt       DateTime
+
+  // optional — null means the clash applies regardless of amount
+  // (the common case). when set, the clash only activates if the
+  // resolved dose meets or exceeds this threshold
+  onlyAboveDose   Float?
+  minSpacingHours Float?
+
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
+  medication     Medication     @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@unique([supplementTypeId, medicationId])
+  @@index([medicationId])
+}
+
+model Medication {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String
+
+  supplementMedicationClashes SupplementMedicationClash[]
+  userMedications             UserMedication[]
+}
+
+model UserMedication {
+  id           String @id @default(cuid())
+  userId       String
+  medicationId Int
+  dosage       Float?
+
+  dayTiming       DayTiming[]
+  weeklyFrequency WeeklyFrequency
+
+  user       User       @relation(fields: [userId], references: [id])
+  medication Medication @relation(fields: [medicationId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, medicationId])
+  @@index([medicationId])
+}

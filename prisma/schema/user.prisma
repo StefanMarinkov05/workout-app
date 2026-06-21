@@ -1,33 +1,35 @@
 model User {
-  id              String           @id @default(cuid())
-  name            String
-  nickname        String?
-  age             Float?
-  weight          Float?
-  targetWeight    Float?
-  bodyFat         Float?
-  motivation      String?
-  profilePicUrl   String?
-  nutritionTarget NutritionTarget?
+  id            String  @id @default(cuid())
+  name          String
+  nickname      String?
+  age           Float?
+  sex           Sex
+  weight        Float?
+  targetWeight  Float?
+  bodyFat       Float?
+  motivation    String?
+  profilePicUrl String?
+  scheduleId String?
 
   photos       Image[]
   schedules    Schedule?
-  supplements  Supplement[]
+  userStats    UserStats?
   equipments   UserEquipment[]
   bodyMeasures BodyMeasurement[]
-  userStats    UserStats[]
 
+  progressSnapshots ProgressSnapshot[]
+  personalRecords PersonalRecord[]
+  exerciseTypeFrequencies ExerciseTypeFrequency[]
+  progressionEvents ProgressionEvent[]
+
+  supplements  UserSupplement[]
+  nutritionTarget   NutritionTarget?
+  medicalConditions UserMedicalCondition[]
+  userMedications UserMedication[]
+  
   createdAt DateTime  @default(now())
   updatedAt DateTime?
   deletedAt DateTime?
-
-  progressSnapshots ProgressSnapshot[]
-
-  personalRecords PersonalRecord[]
-
-  exerciseTypeFrequencies ExerciseTypeFrequency[]
-
-  progressionEvents ProgressionEvent[]
 }
 
 model NutritionTarget {
@@ -51,8 +53,4 @@ model NutritionTarget {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-}
-
-model UserSupplement {
-  id String @id @default(cuid())
 }

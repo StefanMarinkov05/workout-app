@@ -49,7 +49,7 @@ model ExerciseTemplate {
   @@index([createdBy])
 }
 
-model ExerciseDayTemlpate {
+model ExerciseDayTemplate {
   id             String        @id @default(cuid())
   title          String?
   date           DateTime
@@ -76,14 +76,14 @@ model MesocycleTemplate {
   split             Split?
   allowNotification Boolean   @default(false)
 
-  trainingDaysTemplate ExerciseDayTemlpate[]
+  trainingDaysTemplate ExerciseDayTemplate[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  templateSheduleId String
-  scheduleTemplate  ScheduleTemplate @relation(fields: [templateSheduleId], references: [id])
+  scheduleTemplateId String
+  scheduleTemplate   ScheduleTemplate @relation(fields: [scheduleTemplateId], references: [id])
 }
 
 model ScheduleTemplate {
@@ -91,3 +91,5 @@ model ScheduleTemplate {
 
   mesocycleTemplates MesocycleTemplate[]
 }
+
+// ====== Supplements =======

@@ -41,8 +41,8 @@ model Mesocycle {
 
   trainingDays ExerciseDay[]
 
-  sheduleId String
-  schedule  Schedule @relation(fields: [sheduleId], references: [id])
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
 
   exerciseTypeFrequencies ExerciseTypeFrequency[]
 }

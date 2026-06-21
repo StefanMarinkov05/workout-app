@@ -33,17 +33,17 @@ model Exercise {
 // Equipment that the user has
 model UserEquipment {
   userId      String
-  EquipmentId Int
+  equipmentId Int
 
   user      User      @relation(fields: [userId], references: [id])
-  equipment Equipment @relation(fields: [EquipmentId], references: [id])
+  equipment Equipment @relation(fields: [equipmentId], references: [id])
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@id([userId, EquipmentId])
-  @@index([EquipmentId])
+  @@id([userId, equipmentId])
+  @@index([equipmentId])
 }
 
 // Each set's specifications
@@ -68,7 +68,7 @@ model SetSpec {
   completed   Boolean @default(true)
 
   actualLeftWeight         Float?
-  actualRigthWeight        Float?
+  actualRightWeight        Float?
   actualReps               Int?
   actualBreakSec           Int?
   actualPerformanceTimeSec Int?
