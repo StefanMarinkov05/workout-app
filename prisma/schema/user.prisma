@@ -1,13 +1,14 @@
 model User {
-  id            String  @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String
   nickname      String?
   age           Float?
   sex           Sex
   weight        Float?
+  isPregnant    Boolean?
+  isLactating   Boolean?
   targetWeight  Float?
   bodyFat       Float?
-  motivation    String?
   profilePicUrl String?
   scheduleId    String?
 
@@ -22,8 +23,9 @@ model User {
   exerciseTypeFrequencies ExerciseTypeFrequency[]
   progressionEvents       ProgressionEvent[]
 
+  nutritionTarget NutritionTarget?
+
   supplements       UserSupplement[]
-  nutritionTarget   NutritionTarget?
   medicalConditions UserMedicalCondition[]
   userMedications   UserMedication[]
   userAllergies     UserAllergy[]
@@ -54,4 +56,75 @@ model NutritionTarget {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
+}
+
+model UserSupplement {
+  id               String @id @default(cuid())
+  supplementTypeId Int
+  userId           String
+  dailyDose        Float
+  dailyCapsules    Int?
+  quantity         Float? @default(0)
+
+  dayTiming       DayTiming[]
+  weeklyFrequency WeeklyFrequency
+
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([supplementTypeId, userId])
+}
+
+model UserMedicalCondition {
+  id                     String    @id @default(cuid())
+  userId                 String
+  medicalConditionTypeId Int
+  diagnosedDate          DateTime?
+  severity               String?
+
+  user             User             @relation(fields: [userId], references: [id])
+  medicalCondition MedicalCondition @relation(fields: [medicalConditionTypeId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, medicalConditionTypeId])
+  @@index([medicalConditionTypeId])
+}
+
+model UserMedication {
+  id           String @id @default(cuid())
+  userId       String
+  medicationId Int
+  dosage       Float?
+
+  dayTiming       DayTiming[]
+  weeklyFrequency WeeklyFrequency
+
+  user       User       @relation(fields: [userId], references: [id])
+  medication Medication @relation(fields: [medicationId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, medicationId])
+  @@index([medicationId])
+}
+
+model UserAllergy {
+  id         String @id @default(cuid())
+  userId     String
+  allergenId Int
+
+  user     User     @relation(fields: [userId], references: [id])
+  allergen Allergen @relation(fields: [allergenId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, allergenId])
 }

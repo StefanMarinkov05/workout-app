@@ -8,27 +8,6 @@ model Hormone {
   deletedAt DateTime?
 }
 
-model UserSupplement {
-  id               String @id @default(cuid())
-  supplementTypeId Int
-  userId           String
-  dailyDose        Float
-  dailyCapsules    Int?
-  quantity         Float? @default(0)
-
-  dayTiming       DayTiming[]
-  weeklyFrequency WeeklyFrequency
-
-  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
-  user           User           @relation(fields: [userId], references: [id])
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@index([supplementTypeId, userId])
-}
-
 // the supplement itself — reference data, shared definition
 model SupplementType {
   id              Int      @id @default(autoincrement())
@@ -59,7 +38,7 @@ model SupplementDoseRange {
   minAgeYears        Int?
   maxAgeYears        Int?
   medicalConditionId Int? // one condition per row — multiple rows for multiple conditions
-  pregnant           Boolean? // null = cannot get pregnant
+  isPregnant         Boolean? // null = cannot get pregnant
   lowerLimit         Float?
   upperLimit         Float?
   toleranceLimit     Float?
@@ -125,23 +104,6 @@ model MedicalCondition {
   deletedAt DateTime?
 }
 
-model UserMedicalCondition {
-  id                     String    @id @default(cuid())
-  userId                 String
-  medicalConditionTypeId Int
-  diagnosedDate          DateTime?
-  severity               String?
-
-  user             User             @relation(fields: [userId], references: [id])
-  medicalCondition MedicalCondition @relation(fields: [medicalConditionTypeId], references: [id])
-
-  createdAt DateTime @default(now())
-  // hard delete only
-
-  @@unique([userId, medicalConditionTypeId])
-  @@index([medicalConditionTypeId])
-}
-
 model SupplementMedicalConditionClash {
   id                 String        @id @default(cuid())
   supplementTypeId   Int
@@ -169,25 +131,6 @@ model Medication {
 
   supplementMedicationClashes SupplementMedicationClash[]
   userMedications             UserMedication[]
-}
-
-model UserMedication {
-  id           String @id @default(cuid())
-  userId       String
-  medicationId Int
-  dosage       Float?
-
-  dayTiming       DayTiming[]
-  weeklyFrequency WeeklyFrequency
-
-  user       User       @relation(fields: [userId], references: [id])
-  medication Medication @relation(fields: [medicationId], references: [id])
-
-  createdAt DateTime @default(now())
-  // hard delete only
-
-  @@unique([userId, medicationId])
-  @@index([medicationId])
 }
 
 model SupplementMedicationClash {
@@ -233,18 +176,4 @@ model SupplementAllergen {
   allergen       Allergen       @relation(fields: [allergenId], references: [id], onDelete: Cascade)
 
   @@id([supplementTypeId, allergenId])
-}
-
-model UserAllergy {
-  id         String @id @default(cuid())
-  userId     String
-  allergenId Int
-
-  user     User     @relation(fields: [userId], references: [id])
-  allergen Allergen @relation(fields: [allergenId], references: [id])
-
-  createdAt DateTime @default(now())
-  // hard delete only
-
-  @@unique([userId, allergenId])
 }
