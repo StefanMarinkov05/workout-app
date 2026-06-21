@@ -1,0 +1,38 @@
+model UserConsent {
+  id             String      @id @default(cuid())
+  userId         String
+  consentType    ConsentType
+  granted        Boolean
+  consentVersion String // which version of the consent text was shown
+  grantedAt      DateTime?
+  revokedAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, consentType])
+}
+
+model DataErasureRequest {
+  id          String       @id @default(cuid())
+  userId      String
+  scope       ErasureScope
+  requestedAt DateTime     @default(now())
+  completedAt DateTime?
+  notes       String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model AIUsageLog {
+  id          String   @id @default(cuid())
+  userId      String
+  feature     String // "supplement_explanation", "program_narrative"
+  modelUsed   String // "claude-haiku", etc.
+  generatedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, feature])
+}

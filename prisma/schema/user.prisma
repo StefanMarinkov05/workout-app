@@ -4,17 +4,15 @@ model User {
   nickname      String?
   age           Float?
   sex           Sex
-  weight        Float?
   isPregnant    Boolean?
   isLactating   Boolean?
   targetWeight  Float?
-  bodyFat       Float?
   profilePicUrl String?
   scheduleId    String?
 
   primaryGoal                 TrainingGoal?
   secondaryGoal               TrainingGoal?
-  riskTollerance              RiskTolerance?
+  riskTolerance               RiskTolerance?
   dietaryPattern              DietaryPattern?       @default(OMNIVORE)
   generalStimulantSensitivity SensitivityLevel?     @default(NORMAL)
   occupationalActivity        OccupationalActivity?
@@ -38,6 +36,10 @@ model User {
   userAllergies               UserAllergy[]
   userSupplementSensitivities UserSupplementSensitivity[]
   userSupplementPreferences   UserSupplementPreference[]
+
+  consents            UserConsent[]
+  dataErasureRequests DataErasureRequest[]
+  aiusageLogs         AIUsageLog[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime?
@@ -89,20 +91,20 @@ model UserSupplement {
 }
 
 model UserMedicalCondition {
-  id                     String    @id @default(cuid())
-  userId                 String
-  medicalConditionTypeId Int
-  diagnosedDate          DateTime?
-  severity               String?
+  id                 String    @id @default(cuid())
+  userId             String
+  medicalConditionId Int
+  diagnosedDate      DateTime?
+  severity           String?
 
   user             User             @relation(fields: [userId], references: [id])
-  medicalCondition MedicalCondition @relation(fields: [medicalConditionTypeId], references: [id])
+  medicalCondition MedicalCondition @relation(fields: [medicalConditionId], references: [id])
 
   createdAt DateTime @default(now())
   // hard delete only
 
-  @@unique([userId, medicalConditionTypeId])
-  @@index([medicalConditionTypeId])
+  @@unique([userId, medicalConditionId])
+  @@index([medicalConditionId])
 }
 
 model UserMedication {

@@ -250,3 +250,15 @@ enum PreferenceDirection {
   MUST_INCLUDE // user explicitly wants this, force into final list
   EXCLUDE // user explicitly refuses this, remove regardless of rank
 }
+
+enum ConsentType {
+  TERMS_OF_SERVICE
+  HEALTH_DATA_PROCESSING
+  MARKETING
+  AI_DATA_USAGE
+}
+
+enum ErasureScope {
+  HEALTH_DATA_ONLY
+  FULL_ACCOUNT
+}

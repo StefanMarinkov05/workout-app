@@ -4,7 +4,7 @@ model SupplementType {
   name            String   @unique
   measurementUnit String // "g", "mg", "mcg", "IU"
   description     String
-  allicaes        String[] // Vit. D3 == D3 == Cholecalciferol = Vitamin d...
+  aliases         String[] // Vit. D3 == D3 == Cholecalciferol = Vitamin d...
 
   doseRanges                  SupplementDoseRange[]
   supplementCoFactorsA        SupplementCoFactor[]              @relation("CofactorA")
@@ -39,6 +39,7 @@ model SupplementDoseRange {
   toleranceLimit     Float?
   sourceUrl          String
   verifiedAt         DateTime
+  verifiedBy         String?
 
   supplementType   SupplementType    @relation(fields: [supplementTypeId], references: [id])
   medicalCondition MedicalCondition? @relation(fields: [medicalConditionId], references: [id])
@@ -54,6 +55,7 @@ model SupplementCoFactor {
   reason        String
   sourceUrl     String
   verifiedAt    DateTime
+  verifiedBy    String?
 
   supplementA SupplementType @relation("CofactorA", fields: [supplementAId], references: [id], onDelete: Cascade)
   supplementB SupplementType @relation("CofactorB", fields: [supplementBId], references: [id], onDelete: Cascade)
@@ -71,6 +73,7 @@ model SupplementClash {
   evidenceTier       EvidenceTier
   sourceUrl          String
   verifiedAt         DateTime
+  verifiedBy         String?
   reason             String
   minSpacingHours    Int? // null = no specific spacing helps
 
@@ -88,7 +91,7 @@ model MedicalCondition {
   name        String                    @unique
   description String?
   category    MedicalConditionCategory?
-  allicaes    String[] // ["renal disease", "CKD"] — intake matching
+  aliases     String[] // ["renal disease", "CKD"] — intake matching
 
   doseRanges        SupplementDoseRange[]
   clashes           SupplementMedicalConditionClash[]
@@ -108,6 +111,7 @@ model SupplementMedicalConditionClash {
   reason             String
   sourceUrl          String
   verifiedAt         DateTime
+  verifiedBy         String?
 
   supplementType   SupplementType   @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
   medicalCondition MedicalCondition @relation(fields: [medicalConditionId], references: [id], onDelete: Cascade)
@@ -123,7 +127,7 @@ model Medication {
   id          Int      @id @default(autoincrement())
   name        String   @unique
   description String
-  allicaes    String[]
+  aliases     String[]
 
   supplementMedicationClashes SupplementMedicationClash[]
   userMedications             UserMedication[]
@@ -138,6 +142,7 @@ model SupplementMedicationClash {
   reason           String
   sourceUrl        String
   verifiedAt       DateTime
+  verifiedBy       String?
 
   // optional — null means the clash applies regardless of amount
   // (the common case). when set, the clash only activates if the
@@ -172,6 +177,7 @@ model SupplementAllergen {
   reason           String
   sourceUrl        String
   verifiedAt       DateTime
+  verifiedBy       String?
 
   supplementType SupplementType @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
   allergen       Allergen       @relation(fields: [allergenId], references: [id], onDelete: Cascade)
@@ -203,6 +209,7 @@ model SupplementHormonalEffect {
   reason       String?
   sourceUrl    String
   verifiedAt   DateTime
+  verifiedBy   String?
 
   supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
   hormone        Hormone        @relation(fields: [hormoneId], references: [id])
@@ -237,6 +244,7 @@ model SupplementFoodInteraction {
   minSpacingHours  Int?
   sourceUrl        String
   verifiedAt       DateTime
+  verifiedBy       String?
 
   supplementType SupplementType @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
   food           Food?          @relation(fields: [foodId], references: [id], onDelete: Cascade)
