@@ -37,6 +37,7 @@ model User {
   userMedications             UserMedication[]
   userAllergies               UserAllergy[]
   userSupplementSensitivities UserSupplementSensitivity[]
+  userSupplementPreferences   UserSupplementPreference[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime?
@@ -143,6 +144,24 @@ model UserSupplementSensitivity {
   supplementTypeId Int
   level            SensitivityLevel
   notes            String?
+
+  user           User           @relation(fields: [userId], references: [id])
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@unique([userId, supplementTypeId])
+}
+
+model UserSupplementPreference {
+  id               String              @id @default(cuid())
+  userId           String
+  supplementTypeId Int
+  direction        PreferenceDirection
+  reason           String? // optional — "tried before, didn't like it",
+  // "ethical/dietary reasons", "previous bad reaction"
 
   user           User           @relation(fields: [userId], references: [id])
   supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])

@@ -245,3 +245,8 @@ enum OccupationalActivity {
   ACTIVE // physically demanding job
   MIXED
 }
+
+enum PreferenceDirection {
+  MUST_INCLUDE // user explicitly wants this, force into final list
+  EXCLUDE // user explicitly refuses this, remove regardless of rank
+}

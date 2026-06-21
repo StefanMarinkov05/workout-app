@@ -19,6 +19,7 @@ model SupplementType {
   userSupplementSensitivities UserSupplementSensitivity[]
   supplementFoodInteractions  SupplementFoodInteraction[]
   supplementUsageTips         SupplementUsageTip[]
+  userSupplementPreferences   UserSupplementPreference[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
