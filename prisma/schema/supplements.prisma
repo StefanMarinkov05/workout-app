@@ -6,23 +6,23 @@ model SupplementType {
   description     String
   allicaes        String[] // Vit. D3 == D3 == Cholecalciferol = Vitamin d...
 
-  doseRanges           SupplementDoseRange[]
-  supplementCoFactorsA SupplementCoFactor[]              @relation("CofactorA")
-  supplementCoFactorsB SupplementCoFactor[]              @relation("CofactorB")
-  clashesA             SupplementClash[]                 @relation("ClashA")
-  clashesB             SupplementClash[]                 @relation("ClashB")
-  userSupplements      UserSupplement[]
-  medicalClashes       SupplementMedicalConditionClash[]
-  medicationClashes    SupplementMedicationClash[]
-  supplementAllergens  SupplementAllergen[]
+  doseRanges                  SupplementDoseRange[]
+  supplementCoFactorsA        SupplementCoFactor[]              @relation("CofactorA")
+  supplementCoFactorsB        SupplementCoFactor[]              @relation("CofactorB")
+  clashesA                    SupplementClash[]                 @relation("ClashA")
+  clashesB                    SupplementClash[]                 @relation("ClashB")
+  userSupplements             UserSupplement[]
+  medicalClashes              SupplementMedicalConditionClash[]
+  medicationClashes           SupplementMedicationClash[]
+  supplementAllergens         SupplementAllergen[]
+  supplementHormonalEffects   SupplementHormonalEffect[]
+  userSupplementSensitivities UserSupplementSensitivity[]
+  supplementFoodInteractions  SupplementFoodInteraction[]
+  supplementUsageTips         SupplementUsageTip[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-
-  supplementHormonalEffects SupplementHormonalEffect[]
-
-  userSupplementSensitivities UserSupplementSensitivity[]
 }
 
 model SupplementDoseRange {
@@ -208,4 +208,55 @@ model SupplementHormonalEffect {
 
   @@unique([supplementTypeId, hormoneId])
   @@index([hormoneId])
+}
+
+// ====== SUPPLEMENT + MEAL =====
+
+model Food {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // "Dairy", "Fatty Meal", "Coffee", "Fiber-rich meal"
+  description String?
+  aliases     String[]
+
+  interactions SupplementFoodInteraction[]
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+}
+
+model SupplementFoodInteraction {
+  id               String              @id @default(cuid())
+  supplementTypeId Int
+  mealType         MealType? // generic macronutrient-based requirement
+  foodId           Int? // specific food, when the interaction is
+  // food-specific rather than macronutrient-general
+  mealTiming       MealTiming? // beginning/middle/end of the meal, if it matters
+  type             FoodInteractionType
+  reason           String
+  minSpacingHours  Int?
+  sourceUrl        String
+  verifiedAt       DateTime
+
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
+  food           Food?          @relation(fields: [foodId], references: [id], onDelete: Cascade)
+
+  @@index([foodId])
+  @@index([supplementTypeId, mealType])
+}
+
+model SupplementUsageTip {
+  id               String      @id @default(cuid())
+  supplementTypeId Int
+  tip              String // "Take with a meal to improve survival
+  // through stomach acid"
+  dayTiming        DayTiming?
+  mealTiming       MealTiming?
+  sourceUrl        String? // optional here — general practice
+  // guidance is held to a lighter sourcing
+  // bar than a clash/safety claim
+  verifiedAt       DateTime?
+
+  supplementType SupplementType @relation(fields: [supplementTypeId], references: [id], onDelete: Cascade)
+
+  @@index([supplementTypeId])
 }

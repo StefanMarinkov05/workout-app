@@ -15,8 +15,9 @@ model User {
   primaryGoal                 TrainingGoal?
   secondaryGoal               TrainingGoal?
   riskTollerance              RiskTolerance?
-  dietaryPattern              DietaryPattern?   @default(OMNIVORE)
-  generalStimulantSensitivity SensitivityLevel? @default(NORMAL)
+  dietaryPattern              DietaryPattern?       @default(OMNIVORE)
+  generalStimulantSensitivity SensitivityLevel?     @default(NORMAL)
+  occupationalActivity        OccupationalActivity?
 
   photos       Image[]
   schedules    Schedule?

@@ -144,7 +144,7 @@ enum DayTiming {
 }
 
 enum MealTiming {
-  BEGGING
+  BEGGINNING
   MIDDLE
   END
 }
@@ -229,4 +229,19 @@ enum SensitivityLevel {
   SENSITIVE // tolerate at reduced dose only
   NORMAL // standard dosing fine
   RESISTANT // requires higher than typical dose for effect
+}
+
+enum FoodInteractionType {
+  ENHANCES_ABSORPTION // CoQ10 + fatty meal
+  REQUIRES_PRESENCE // fat-soluble vitamins need fat present at all
+  REDUCES_ABSORPTION // Zinc + dairy/calcium
+  REQUIRES_AVOIDANCE // some supplements need empty stomach
+  DELAYS_ABSORPTION // fiber slowing uptake
+}
+
+enum OccupationalActivity {
+  SEDENTARY // desk job, mostly sitting
+  STANDING // mostly on feet, low exertion
+  ACTIVE // physically demanding job
+  MIXED
 }
