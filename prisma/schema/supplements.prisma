@@ -269,3 +269,34 @@ model SupplementUsageTip {
 
   @@index([supplementTypeId])
 }
+
+model SupplementDose {
+  id               String     @id @default(cuid())
+  userSupplementId String
+  scheduledDate    DateTime
+  dayTiming        DayTiming
+  status           DoseStatus @default(PENDING)
+  takenAt          DateTime?
+  skipReason       String?
+
+  userSupplement UserSupplement @relation(fields: [userSupplementId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime  @default(now())
+  deletedAt DateTime?
+
+  @@index([userSupplementId, scheduledDate])
+  @@index([scheduledDate])
+}
+
+model SupplementProtocolPhase {
+  id               String          @id @default(cuid())
+  userSupplementId String
+  phaseOrder       Int // 1, 2, 3 — sequence
+  durationDays     Int
+  dailyDose        Float
+  weeklyFrequency  WeeklyFrequency
+
+  userSupplement UserSupplement @relation(fields: [userSupplementId], references: [id], onDelete: Cascade)
+
+  @@index([userSupplementId, phaseOrder])
+}

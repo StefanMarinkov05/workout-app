@@ -70,15 +70,18 @@ model NutritionTarget {
 }
 
 model UserSupplement {
-  id               String @id @default(cuid())
+  id               String           @id @default(cuid())
   supplementTypeId Int
   userId           String
-  dailyDose        Float
+  dailyDose        Float?
   dailyCapsules    Int?
-  quantity         Float? @default(0)
+  weeklyFrequency  WeeklyFrequency?
 
-  dayTiming       DayTiming[]
-  weeklyFrequency WeeklyFrequency
+  quantity  Float?      @default(0)
+  dayTiming DayTiming[]
+
+  supplementDoses          SupplementDose[]
+  supplementProtocolPhases SupplementProtocolPhase[]
 
   supplementType SupplementType @relation(fields: [supplementTypeId], references: [id])
   user           User           @relation(fields: [userId], references: [id])

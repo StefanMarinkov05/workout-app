@@ -262,3 +262,10 @@ enum ErasureScope {
   HEALTH_DATA_ONLY
   FULL_ACCOUNT
 }
+
+enum DoseStatus {
+  PENDING
+  TAKEN
+  SKIPPED
+  MISSED
+}
