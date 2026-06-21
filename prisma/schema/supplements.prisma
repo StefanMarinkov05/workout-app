@@ -35,6 +35,7 @@ model SupplementType {
   name            String @unique
   measurementUnit String // "g", "mg", "mcg", "IU"
   description     String
+  allicaes String[] // Vit. D3 == D3 == Cholecalciferol = Vitamin d...
 
   userSupplements      UserSupplement[]
   doseRanges           SupplementDoseRange[]
@@ -51,12 +52,12 @@ model SupplementType {
 }
 
 model SupplementDoseRange {
-  id                 String    @id @default(cuid())
+  id                 String   @id @default(cuid())
   supplementTypeId   Int
   sex                Sex?
   minAgeYears        Int?
   maxAgeYears        Int?
-  medicalConditionId Int?     // one condition per row — multiple rows for multiple conditions
+  medicalConditionId Int? // one condition per row — multiple rows for multiple conditions
   pregnant           Boolean? // null = cannot get pregnant
   lowerLimit         Float?
   upperLimit         Float?
@@ -70,6 +71,7 @@ model SupplementDoseRange {
   @@index([supplementTypeId, medicalConditionId])
 }
 
+// ===== SUPPLEMENT PAIRING =====
 model SupplementCoFactor {
   supplementAId Int // always store the SMALLER id here
   supplementBId Int // always store the LARGER id here
@@ -89,10 +91,10 @@ model SupplementClash {
   id                 String        @id @default(cuid())
   supplementAId      Int
   supplementBId      Int
-  medicalConditionId Int?          // null = always applies, or condition-specific
+  medicalConditionId Int? // null = always applies, or condition-specific
   severity           ClashSeverity
   reason             String
-  minSpacingHours    Int?          // null = no specific spacing helps
+  minSpacingHours    Int? // null = no specific spacing helps
 
   sourceUrl  String
   verifiedAt DateTime
@@ -105,17 +107,18 @@ model SupplementClash {
   @@index([supplementBId])
 }
 
+// ===== SUPPLEMENT + MED. CONDITION =====
 model MedicalCondition {
   id          Int                       @id @default(autoincrement())
   name        String                    @unique
   description String?
   category    MedicalConditionCategory?
-  aliases     String[] // ["renal disease", "CKD"] — intake matching
+  allicaes     String[] // ["renal disease", "CKD"] — intake matching
 
-  doseRanges     SupplementDoseRange[]
-  clashes        SupplementMedicalConditionClash[]
+  doseRanges        SupplementDoseRange[]
+  clashes           SupplementMedicalConditionClash[]
   supplementClashes SupplementClash[]
-  userConditions UserMedicalCondition[]
+  userConditions    UserMedicalCondition[]
 
   createdAt DateTime  @default(now())
   deletedAt DateTime?
@@ -139,7 +142,7 @@ model UserMedicalCondition {
 }
 
 model SupplementMedicalConditionClash {
-  id                 String           @id @default(cuid())
+  id                 String        @id @default(cuid())
   supplementTypeId   Int
   medicalConditionId Int
   severity           ClashSeverity
@@ -154,7 +157,36 @@ model SupplementMedicalConditionClash {
   @@index([medicalConditionId])
 }
 
+// ===== SUPPLEMENT + MEDICATION =====
+
 // prescribed drugs antibiotics etc...
+model Medication {
+  id          Int    @id @default(autoincrement())
+  name        String @unique
+  description String
+  allicaes String[]
+
+  supplementMedicationClashes SupplementMedicationClash[]
+  userMedications             UserMedication[]
+}
+model UserMedication {
+  id           String @id @default(cuid())
+  userId       String
+  medicationId Int
+  dosage       Float?
+
+  dayTiming       DayTiming[]
+  weeklyFrequency WeeklyFrequency
+
+  user       User       @relation(fields: [userId], references: [id])
+  medication Medication @relation(fields: [medicationId], references: [id])
+
+  createdAt DateTime @default(now())
+  // hard delete only
+
+  @@unique([userId, medicationId])
+  @@index([medicationId])
+}
 model SupplementMedicationClash {
   id               String        @id @default(cuid())
   supplementTypeId Int
@@ -177,30 +209,11 @@ model SupplementMedicationClash {
   @@index([medicationId])
 }
 
-model Medication {
-  id          Int    @id @default(autoincrement())
-  name        String @unique
+// ===== SUPPLEMENT + ALLERGIES =====
+
+model Allergen {
+  id Int @id @default(autoincrement())
+  name String @unique
   description String
-
-  supplementMedicationClashes SupplementMedicationClash[]
-  userMedications             UserMedication[]
-}
-
-model UserMedication {
-  id           String @id @default(cuid())
-  userId       String
-  medicationId Int
-  dosage       Float?
-
-  dayTiming       DayTiming[]
-  weeklyFrequency WeeklyFrequency
-
-  user       User       @relation(fields: [userId], references: [id])
-  medication Medication @relation(fields: [medicationId], references: [id])
-
-  createdAt DateTime @default(now())
-  // hard delete only
-
-  @@unique([userId, medicationId])
-  @@index([medicationId])
+  allicaes String[]
 }
