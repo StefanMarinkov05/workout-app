@@ -7,3 +7,15 @@ model TipSuggestion {
   createdAt DateTime  @default(now())
   deletedAt DateTime?
 }
+
+model CueMedia {
+  id        String    @id @default(cuid())
+  cueId     String
+  url       String
+  mediaType MediaType
+  order     Int       @default(0)
+
+  cue ExerciseCue @relation(fields: [cueId], references: [id], onDelete: Cascade)
+
+  @@index([cueId])
+}

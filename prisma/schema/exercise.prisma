@@ -162,3 +162,14 @@ model Rep {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 }
+
+model ExerciseCue {
+  id                 String  @id @default(cuid())
+  exerciseTemplateId String
+  type               CueType
+  text               String
+
+  media CueMedia[]
+
+  exerciseTemplate ExerciseTemplate @relation(fields: [exerciseTemplateId], references: [id], onDelete: Cascade)
+}

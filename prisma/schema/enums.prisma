@@ -9,6 +9,12 @@ enum ImageRole {
   PROGRESS_PHOTO // body progress
 }
 
+enum MediaType {
+  IMAGE
+  GIF
+  VIDEO
+}
+
 enum PrioritySide {
   LEFT
   RIGHT
@@ -274,4 +280,11 @@ enum QuantityUnit {
   GRAMS
   CAPSULES
   MILLILITERS
+}
+
+enum CueType {
+  SETUP
+  EXECUTION
+  MIND_MUSCLE
+  COMMON_MISTAKE
 }

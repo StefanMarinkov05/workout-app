@@ -40,9 +40,10 @@ model ExerciseTemplate {
   // default set specs for this template
   setTemplates SetSpecTemplate[]
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  exerciseCues ExerciseCue[]
 
   @@index([typeId])
   @@index([gripId])
@@ -59,11 +60,11 @@ model ExerciseDayTemplate {
   startTime      DateTime?
   endTime        DateTime
 
+  mesocycleTemplates MesocycleTemplate[]
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
-
-  mesocycleTemplates MesocycleTemplate[]
 }
 
 model MesocycleTemplate {
